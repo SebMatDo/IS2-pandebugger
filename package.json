@@ -1,0 +1,23 @@
+{
+  "name": "is2-pandebugger",
+  "version": "1.0.0",
+  "description": "is2 final project",
+  "homepage": "https://github.com/SebMatDo/IS2-pandebugger#readme",
+  "bugs": {
+    "url": "https://github.com/SebMatDo/IS2-pandebugger/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SebMatDo/IS2-pandebugger.git"
+  },
+  "license": "MIT",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
