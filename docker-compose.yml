@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: pandebugger-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for hot reloading
+      - ./src:/usr/src/app/src:delegated
+      - ./tsconfig.json:/usr/src/app/tsconfig.json:ro
+      # Prevent node_modules from being overwritten
+      - /usr/src/app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - API_PREFIX=/api/v1
+      - LOG_LEVEL=debug
+    env_file:
+      - .env
+    networks:
+      - pandebugger-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: pandebugger-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=pandebugger
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - pandebugger-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pandebugger-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@pandebugger.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    networks:
+      - pandebugger-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+networks:
+  pandebugger-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
