@@ -1,25 +1,78 @@
 # Authentication Module
 
+## 📚 **Full Documentation**
+
+For complete authentication and API testing documentation, see:
+
+👉 **[API Testing Guide](../../../docs/API_TESTING.md)**
+
 ## Overview
-JWT-based authentication system matching the Python application's CU06 login functionality.
+
+JWT-based authentication system with bcrypt password hashing, role-based access control, and comprehensive audit logging.
 
 ## Features
-- ✅ Password hashing with bcrypt (10 salt rounds)
-- ✅ JWT token generation and verification
+
+- ✅ Password hashing with bcrypt (10 rounds)
+- ✅ JWT token generation and verification (7-day expiration)
 - ✅ Password strength validation (8+ chars, uppercase, number, symbol)
 - ✅ Authentication middleware for protected routes
 - ✅ Role-based access control (RBAC)
+- ✅ Audit logging for authentication events
 
-## API Endpoints
+## Test Credentials
 
-### POST /api/v1/auth/login
-Authenticate user and receive JWT token.
+**All test users use password:** `Test123!`
 
-**Request:**
+| Email | Role | Permissions |
+|-------|------|-------------|
+| admin@pandebugger.com | Admin | Full system access |
+| maria.gonzalez@pandebugger.com | Bibliotecario | Manage books and users |
+| carlos.ramirez@pandebugger.com | Digitalizador | Digitize books |
+| ana.martinez@pandebugger.com | Revisor | Quality review |
+| luis.fernandez@pandebugger.com | Restaurador | Physical restoration |
+
+## Quick Start
+
+### Login Request
+
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@pandebugger.com","password":"Test123!"}'
+```
+
+### Using the Token
+
+```bash
+curl http://localhost:3000/api/v1/auth/me \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+## Endpoints
+
+- `POST /api/v1/auth/login` - Login (get JWT token)
+- `GET /api/v1/auth/me` - Get current user (requires auth)
+- `POST /api/v1/auth/change-password` - Change password (requires auth)
+
+## Module Structure
+
+```
+src/modules/auth/
+├── auth.controller.ts    # Request handlers
+├── auth.service.ts       # Business logic
+├── auth.middleware.ts    # JWT verification & RBAC
+├── auth.routes.ts        # Route definitions
+├── auth.types.ts         # TypeScript interfaces
+└── README.md            # This file
+```
+
+---
+
+For complete API documentation, request/response examples, Postman setup, and troubleshooting, see the **[API Testing Guide](../../../docs/API_TESTING.md)**.
 ```json
 {
-  "email": "usuario@ejemplo.com",
-  "password": "MiContraseña123!"
+  "email": "admin@pandebugger.com",
+  "password": "Test123!"
 }
 ```
 

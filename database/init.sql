@@ -1,3 +1,4 @@
+https://www.youtube.com/watch?v=9eTVZwMZJsA
 -- Database initialization script for IS2 Pandebugger
 -- Run this after creating your database
 

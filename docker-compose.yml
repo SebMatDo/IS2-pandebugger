@@ -1,4 +1,9 @@
-version: '3.8'
+# ============================================
+# LOCAL DEVELOPMENT ENVIRONMENT
+# ============================================
+# Includes: Backend API + PostgreSQL + pgAdmin
+# Use: docker compose up -d
+# Access pgAdmin: http://localhost:5050
 
 services:
   app:
@@ -14,17 +19,13 @@ services:
       - ./tsconfig.json:/usr/src/app/tsconfig.json:ro
       # Prevent node_modules from being overwritten
       - /usr/src/app/node_modules
-    environment:
-      - NODE_ENV=development
-      - PORT=3000
-      - API_PREFIX=/api/v1
-      - LOG_LEVEL=debug
     env_file:
-      - .env
+      - .env.local
     networks:
       - pandebugger-network
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   postgres:
@@ -33,30 +34,33 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=pandebugger
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      POSTGRES_DB: pandebugger_dev
+      POSTGRES_USER: pandebugger_user
+      POSTGRES_PASSWORD: pandebugger_local_pass_2024
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./src/shared/database/migrations:/docker-entrypoint-initdb.d:ro
     networks:
       - pandebugger-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U pandebugger_user -d pandebugger_dev"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Optional: pgAdmin for database management
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: pandebugger-pgadmin
     ports:
       - "5050:80"
     environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@pandebugger.com
-      - PGADMIN_DEFAULT_PASSWORD=admin
+      PGADMIN_DEFAULT_EMAIL: admin@pandebugger.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
     networks:
       - pandebugger-network
     depends_on:
@@ -69,3 +73,4 @@ networks:
 
 volumes:
   postgres_data:
+  pgadmin_data:

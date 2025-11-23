@@ -1,10 +1,61 @@
 # IS2 Pandebugger - Backend API
 
-A modular monolith backend API built with Express.js and TypeScript, containerized with Docker and ready for AWS deployment.
+> **Modular monolith backend API** built with Express.js, TypeScript, PostgreSQL, and Docker, ready for AWS deployment.
 
-This is an educational project made in Node.js, React and SQL. The aim of this project is to digitalize any physical book into a database that enables lectors to search those books or information.
+Educational project for book digitalization management, enabling the digitization workflow from physical books to searchable digital database.
 
-## 🏗️ Architecture
+---
+
+## 📚 **Documentation**
+
+Complete guides for setup, development, and deployment:
+
+| Guide | Description |
+|-------|-------------|
+| **[🚀 Getting Started](./docs/GETTING_STARTED.md)** | **Start here!** Complete step-by-step setup guide from zero to running |
+| **[🗄️ Database Guide](./docs/DATABASE_GUIDE.md)** | Database management, migrations, seeds, and pgAdmin |
+| **[🧪 API Testing](./docs/API_TESTING.md)** | Testing with Postman, authentication, and all endpoints |
+| **[☁️ AWS Deployment](./docs/AWS_DEPLOYMENT.md)** | Production deployment to AWS ECS + RDS |
+
+---
+
+## ⚡ **Quick Start**
+
+```bash
+# 1. Clone repository
+git clone https://github.com/SebMatDo/IS2-pandebugger.git
+cd IS2-pandebugger
+
+# 2. Install dependencies
+npm install
+
+# 3. Start Docker containers (API + PostgreSQL + pgAdmin)
+docker compose up -d
+
+# 4. Load test data
+docker exec -i pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev < src/shared/database/seeds/001_seed_test_users.sql
+docker exec -i pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev < src/shared/database/seeds/002_seed_test_books.sql
+docker exec -i pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev < src/shared/database/seeds/003_seed_test_tasks.sql
+
+# 5. Test the API
+curl http://localhost:3000/api/v1/health
+```
+
+**Access Points:**
+- 🌐 API: http://localhost:3000/api/v1
+- 🎨 pgAdmin: http://localhost:5050 (admin@pandebugger.com / admin)
+- 📊 Health Check: http://localhost:3000/api/v1/health
+
+**Test Users** (password: `Test123!`):
+- admin@pandebugger.com (Admin)
+- maria.gonzalez@pandebugger.com (Bibliotecario)
+- carlos.ramirez@pandebugger.com (Digitalizador)
+
+👉 **For detailed instructions, see [Getting Started Guide](./docs/GETTING_STARTED.md)**
+
+---
+
+## 🏗️ **Architecture**
 
 This project follows a **modular monolith** architecture where code is organized into independent modules, each with its own:
 - **Routes**: API endpoint definitions
@@ -46,245 +97,320 @@ src/
 - npm >= 9.0.0
 - Docker and Docker Compose (optional, for containerized development)
 
-### Local Development (Without Docker)
+## 🏗️ **Architecture**
 
-1. **Install dependencies:**
-   ```sh
-   npm install
-   ```
+**Modular Monolith** - Code organized into independent, self-contained modules:
 
-2. **Create environment file:**
-   ```sh
-   cp .env.example .env
-   ```
+- **Routes**: API endpoint definitions
+- **Controllers**: Request/response handling
+- **Services**: Business logic and database operations
+- **Types**: TypeScript interfaces and types
+- **Middleware**: Authentication, logging, error handling
 
-3. **Start development server:**
-   ```sh
-   npm run dev
-   ```
+### **Tech Stack**
 
-The API will be available at `http://localhost:3000/api/v1`
+- **Runtime**: Node.js 18+
+- **Language**: TypeScript
+- **Framework**: Express.js
+- **Database**: PostgreSQL 15
+- **Authentication**: JWT (JSON Web Tokens)
+- **Password Hashing**: bcrypt
+- **Containerization**: Docker & Docker Compose
+- **GUI Database**: pgAdmin 4
+- **Production**: AWS ECS + RDS
 
-### Local Development (With Docker)
+### **Project Structure**
 
-1. **Create environment file:**
-   ```sh
-   cp .env.example .env
-   ```
-
-2. **Start all services:**
-   ```sh
-   docker compose up --build
-   ```
-
-This starts:
-- Express API at `http://localhost:3000`
-- PostgreSQL at `localhost:5432`
-- pgAdmin at `http://localhost:5050`
-
-3. **View logs:**
-   ```sh
-   docker compose logs -f app
-   ```
-
-4. **Stop services:**
-   ```sh
-   docker compose down
-   ```
-
-## 📦 Available Scripts
-
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Compile TypeScript to JavaScript
-- `npm start` - Run production build
-- `npm run lint` - Lint code with ESLint
-- `npm run format` - Format code with Prettier
-
-## 🐳 Docker
-
-### Development
-- **Dockerfile:** `Dockerfile.dev`
-- **Compose:** `docker-compose.yml`
-- Hot reloading enabled via volume mounts
-
-### Production
-- **Dockerfile:** `Dockerfile` (multi-stage build)
-- **Compose:** `docker-compose.prod.yml`
-- Optimized image with minimal attack surface
-
-**Build production image:**
-```sh
-docker build -t pandebugger-api:latest .
 ```
-
-**Run production container:**
-```sh
-docker run -p 3000:3000 --env-file .env.production pandebugger-api:latest
+IS2-pandebugger/
+├── src/
+│   ├── modules/              # Feature modules
+│   │   ├── auth/            # Authentication (JWT, login, passwords)
+│   │   ├── books/           # Book management
+│   │   └── health/          # Health check endpoints
+│   ├── shared/
+│   │   ├── database/        # Database migrations and seeds
+│   │   │   ├── migrations/  # SQL schema migrations
+│   │   │   └── seeds/       # Test data
+│   │   ├── middleware/      # Express middleware
+│   │   └── utils/           # Utility functions
+│   ├── config/              # Configuration management
+│   ├── app.ts               # Express app setup
+│   └── server.ts            # Server entry point
+├── docs/                    # Documentation
+│   ├── GETTING_STARTED.md   # Setup guide
+│   ├── DATABASE_GUIDE.md    # Database management
+│   ├── API_TESTING.md       # Postman testing guide
+│   └── AWS_DEPLOYMENT.md    # Production deployment
+├── scripts/                 # Utility scripts
+├── docker-compose.yml       # Local development
+├── Dockerfile              # Production image
+└── package.json            # Dependencies and scripts
 ```
-
-## 🔌 API Endpoints
-
-### Health Checks
-- `GET /api/v1/health` - Basic health check
-- `GET /api/v1/health/readiness` - Readiness probe (checks database connectivity)
-
-### Authentication (CU06 Login - ✅ Implemented)
-- `POST /api/v1/auth/login` - User login with JWT token
-- `GET /api/v1/auth/me` - Get current user (requires authentication)
-- `POST /api/v1/auth/change-password` - Change password (CU20 - ✅ Implemented)
-- `POST /api/v1/auth/restore-password` - Password reset (CU21 - TODO)
-
-**Login Example:**
-```sh
-curl -X POST http://localhost:3000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "usuario@ejemplo.com",
-    "password": "MiContraseña123!"
-  }'
-```
-
-### Books (Example Module)
-- `GET /api/v1/books` - List all books
-- `GET /api/v1/books/:id` - Get book by ID
-- `GET /api/v1/books/search?q=query` - Search books
-- `POST /api/v1/books` - Create new book
-- `PUT /api/v1/books/:id` - Update book
-- `DELETE /api/v1/books/:id` - Delete book
-
-**Example Request:**
-```sh
-curl -X POST http://localhost:3000/api/v1/books \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Clean Code",
-    "author": "Robert C. Martin",
-    "isbn": "978-0132350884",
-    "publishedYear": 2008
-  }'
-```
-
-## ☁️ AWS Deployment
-
-### Architecture Overview
-
-**Recommended AWS services:**
-- **ECS Fargate**: Serverless container orchestration
-- **RDS (PostgreSQL)**: Managed database
-- **Application Load Balancer (ALB)**: Traffic distribution
-- **ECR**: Container registry
-- **Secrets Manager**: Secure credential storage
-- **CloudWatch**: Logging and monitoring
-- **VPC**: Network isolation
-
-### Deployment Steps
-
-#### 1. Build and Push Docker Image to ECR
-
-```sh
-# Authenticate Docker to ECR
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.us-east-1.amazonaws.com
-
-# Create ECR repository
-aws ecr create-repository --repository-name pandebugger-api --region us-east-1
-
-# Build and tag image
-docker build -t pandebugger-api:latest .
-docker tag pandebugger-api:latest <account-id>.dkr.ecr.us-east-1.amazonaws.com/pandebugger-api:latest
-
-# Push to ECR
-docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/pandebugger-api:latest
-```
-
-#### 2. Set Up RDS Database
-
-```sh
-# Create RDS PostgreSQL instance
-aws rds create-db-instance \
-  --db-instance-identifier pandebugger-db \
-  --db-instance-class db.t3.micro \
-  --engine postgres \
-  --master-username admin \
-  --master-user-password <secure-password> \
-  --allocated-storage 20 \
-  --vpc-security-group-ids <security-group-id> \
-  --db-subnet-group-name <subnet-group> \
-  --publicly-accessible false
-```
-
-#### 3. Store Secrets in AWS Secrets Manager
-
-```sh
-aws secretsmanager create-secret \
-  --name pandebugger/db-credentials \
-  --secret-string '{
-    "host":"<rds-endpoint>",
-    "port":5432,
-    "username":"admin",
-    "password":"<secure-password>",
-    "database":"pandebugger"
-  }'
-```
-
-#### 4. Create ECS Task Definition
-
-Create `task-definition.json` and register with:
-```sh
-aws ecs register-task-definition --cli-input-json file://task-definition.json
-```
-
-#### 5. Deploy to ECS
-
-```sh
-aws ecs create-cluster --cluster-name pandebugger-cluster
-aws ecs create-service --cluster pandebugger-cluster --service-name pandebugger-api ...
-```
-
-See full deployment instructions in the AWS documentation section above.
-
-## 🧪 Testing
-
-The API includes health check endpoints for monitoring:
-
-```sh
-# Health check
-curl http://localhost:3000/api/v1/health
-
-# Readiness check
-curl http://localhost:3000/api/v1/health/readiness
-```
-
-## 📝 Adding New Modules
-
-To add a new module (e.g., `users`):
-
-1. Create module directory:
-   ```
-   src/modules/users/
-   ├── users.types.ts
-   ├── users.service.ts
-   ├── users.controller.ts
-   └── users.routes.ts
-   ```
-
-2. Register routes in `src/app.ts`:
-   ```typescript
-   import usersRoutes from './modules/users/users.routes';
-   app.use(`${config.apiPrefix}/users`, usersRoutes);
-   ```
-
-## 🔧 Configuration
-
-Environment variables are loaded from `.env` file. See `.env.example` for all available options.
-
-## 📄 License
-
-MIT
-
-## 👥 Contributing
-
-This is an educational project for IS2 course at UNAL.
 
 ---
 
-**Need help?** Check the [issues page](https://github.com/SebMatDo/IS2-pandebugger/issues) or create a new issue.
+## 📦 **Available Scripts**
+
+```bash
+# Development
+npm run dev              # Start development server with hot reload
+npm run build            # Compile TypeScript to JavaScript
+npm start                # Run production build
+
+# Docker
+npm run docker:up        # Start all containers
+npm run docker:down      # Stop containers
+npm run docker:logs      # View logs
+npm run docker:clean     # Stop and remove volumes (⚠️ deletes data)
+
+# Database
+npm run db:migrate       # Run database migrations
+npm run db:seed          # Load test data
+npm run db:reset         # Migrate + seed
+
+# Code Quality
+npm run lint             # Lint code with ESLint
+npm run format           # Format code with Prettier
+```
+
+---
+
+##  **API Endpoints**
+
+### **Health Checks**
+- `GET /api/v1/health` - Basic health check
+- `GET /api/v1/health/readiness` - Database connectivity check
+
+### **Authentication**
+- `POST /api/v1/auth/login` - Login (get JWT token)
+- `GET /api/v1/auth/me` - Get current user (requires auth)
+- `POST /api/v1/auth/change-password` - Change password (requires auth)
+
+### **Books** (TODO)
+- `GET /api/v1/books` - List books
+- `GET /api/v1/books/:id` - Get book by ID
+- `POST /api/v1/books` - Create book
+- `PUT /api/v1/books/:id` - Update book
+- `DELETE /api/v1/books/:id` - Delete book
+
+👉 **Full API documentation: [API Testing Guide](./docs/API_TESTING.md)**
+
+---
+
+## 🐳 **Docker Environment**
+
+### **Services**
+
+- **app** - Backend API (Node.js + Express)
+- **postgres** - PostgreSQL 15 database
+- **pgadmin** - pgAdmin 4 web interface
+
+### **Volumes**
+
+- `postgres_data` - Persistent database storage
+- `pgadmin_data` - pgAdmin configuration
+
+### **Networks**
+
+- `pandebugger-network` - Internal Docker network
+
+### **Useful Commands**
+
+```bash
+# View running containers
+docker compose ps
+
+# View logs
+docker compose logs -f app          # Backend logs
+docker compose logs -f postgres     # Database logs
+docker compose logs -f              # All logs
+
+# Restart a service
+docker compose restart app
+
+# Access PostgreSQL shell
+docker exec -it pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev
+
+# Execute SQL file
+docker exec -i pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev < file.sql
+```
+
+---
+
+## 🗄️ **Database**
+
+### **Schema**
+
+- `usuarios` - System users
+- `roles` - User roles (Admin, Bibliotecario, etc.)
+- `libros` - Books catalog
+- `estados_libro` - Book workflow states
+- `categoria` - Book categories
+- `tareas` - Assigned tasks
+- `historial` - Audit log
+- `accion` - Action types
+- `target_type` - Audit target types
+
+### **Migrations**
+
+Migrations are SQL files that define database schema changes:
+
+```
+src/shared/database/migrations/
+├── 001_initial_schema.sql           # Create all tables
+└── 002_seed_reference_data.sql      # Insert reference data
+```
+
+Migrations run automatically on first container startup.
+
+### **Seeds (Test Data)**
+
+Seeds populate the database with sample data for development:
+
+```
+src/shared/database/seeds/
+├── 001_seed_test_users.sql     # 5 test users
+├── 002_seed_test_books.sql     # 10 sample books
+└── 003_seed_test_tasks.sql     # 3 assigned tasks
+```
+
+👉 **Full database documentation: [Database Guide](./docs/DATABASE_GUIDE.md)**
+
+---
+
+## 🔐 **Authentication**
+
+### **JWT Token-based Authentication**
+
+- **Algorithm**: HS256 (HMAC with SHA-256)
+- **Expiration**: 7 days (configurable)
+- **Password Hashing**: bcrypt (10 rounds)
+
+### **Test Credentials**
+
+All test users use password: **`Test123!`**
+
+| Email | Role | Description |
+|-------|------|-------------|
+| admin@pandebugger.com | Admin | Full system access |
+| maria.gonzalez@pandebugger.com | Bibliotecario | Manage books and users |
+| carlos.ramirez@pandebugger.com | Digitalizador | Digitize books |
+| ana.martinez@pandebugger.com | Revisor | Quality review |
+| luis.fernandez@pandebugger.com | Restaurador | Physical restoration |
+
+### **Example Login**
+
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@pandebugger.com","password":"Test123!"}'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": 1,
+      "email": "admin@pandebugger.com",
+      "rol_nombre": "Admin"
+    }
+  }
+}
+```
+
+### **Using the Token**
+
+```bash
+curl http://localhost:3000/api/v1/auth/me \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+👉 **Full authentication guide: [API Testing Guide](./docs/API_TESTING.md)**
+
+---
+
+## ☁️ **Deployment**
+
+### **Production Architecture**
+
+```
+AWS Cloud
+├── ECS Fargate          # Backend API containers
+├── RDS PostgreSQL       # Managed database
+├── Application Load Balancer
+├── ECR                  # Container registry
+└── Secrets Manager      # Credentials storage
+```
+
+### **Deployment Steps**
+
+1. Create RDS PostgreSQL instance
+2. Build and push Docker image to ECR
+3. Create ECS cluster and task definition
+4. Configure Application Load Balancer
+5. Deploy ECS service
+6. Run database migrations on RDS
+
+👉 **Full deployment guide: [AWS Deployment](./docs/AWS_DEPLOYMENT.md)**
+
+---
+
+## 🧪 **Testing**
+
+### **Manual Testing with Postman**
+
+1. Import collection from `docs/API_TESTING.md`
+2. Set environment variables
+3. Run authentication flow
+4. Test protected endpoints
+
+### **Automated Testing** (TODO)
+
+```bash
+npm test                 # Run test suite
+npm run test:watch       # Watch mode
+npm run test:coverage    # Generate coverage report
+```
+
+---
+
+## 📝 **Contributing**
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/new-feature`
+3. Make your changes
+4. Test locally: `docker compose up`
+5. Commit changes: `git commit -am 'Add new feature'`
+6. Push to branch: `git push origin feature/new-feature`
+7. Create Pull Request
+
+---
+
+## 📄 **License**
+
+MIT License - see [LICENSE](./LICENSE) file
+
+---
+
+## 🔗 **Links**
+
+- **Repository**: https://github.com/SebMatDo/IS2-pandebugger
+- **Issues**: https://github.com/SebMatDo/IS2-pandebugger/issues
+- **Documentation**: [docs/](./docs/)
+
+---
+
+## 🆘 **Need Help?**
+
+1. Check the [Getting Started Guide](./docs/GETTING_STARTED.md)
+2. Review [Troubleshooting](./docs/GETTING_STARTED.md#solución-de-problemas)
+3. Check Docker logs: `docker compose logs -f`
+4. Open an issue on GitHub
+
+---
+
+**Made with ❤️ for IS2 - Universidad Nacional de Colombia**

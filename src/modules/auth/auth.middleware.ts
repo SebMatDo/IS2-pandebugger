@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { authService } from './auth.service';
 import { AppError } from '../../shared/middleware/errorHandler';
 import { AuthRequest } from './auth.types';
+import { logger } from '../../shared/middleware/logger';
 
 /**
  * Middleware to verify JWT token and attach user to request
@@ -9,14 +10,35 @@ import { AuthRequest } from './auth.types';
  */
 export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
   try {
+    logger.debug('Request headers:', req.headers);
     const authHeader = req.headers.authorization;
-
+    logger.debug('Authorization header:', authHeader);
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw new AppError('Token no proporcionado', 401);
     }
+    if (!authHeader.startsWith('Bearer ')) {
+      logger.warn('Invalid authorization format:', authHeader);
+      res.status(401).json({
+        success: false,
+        message: 'Formato de token inválido. Use: Bearer <token>'
+      });
+      return;
+    }
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const token = authHeader.substring(7); // Remove 'Bearer '
+    logger.debug('Extracted token:', token.substring(0, 20) + '...');
+
+    if (!token) {
+      logger.warn('Token is empty after extraction');
+      res.status(401).json({
+        success: false,
+        message: 'Token vacío'
+      });
+      return;
+    }
+
     const payload = authService.verifyToken(token);
+    logger.debug('Token payload:', payload);
 
     // Attach user info to request
     (req as AuthRequest).user = payload;
