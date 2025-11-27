@@ -27,10 +27,10 @@ export class AuthService {
 
   /**
    * Validate password strength
-   * Must have: 8+ chars, 1 uppercase, 1 number, 1 symbol
+   * Must have: 8+ chars, 1 uppercase, 1 lowercase, 1 number, 1 symbol
    */
   validatePasswordStrength(password: string): boolean {
-    const pattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/;
+    const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/;
     return pattern.test(password);
   }
 

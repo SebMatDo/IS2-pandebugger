@@ -158,6 +158,13 @@ npm run dev              # Start development server with hot reload
 npm run build            # Compile TypeScript to JavaScript
 npm start                # Run production build
 
+# Testing
+npm test                 # Run all tests
+npm run test:watch       # Run tests in watch mode (development)
+npm run test:coverage    # Run tests with coverage report
+npm run test:verbose     # Run tests with detailed output
+npm run test:auth        # Run only authentication tests
+
 # Docker
 npm run docker:up        # Start all containers
 npm run docker:down      # Stop containers
