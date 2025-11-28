@@ -270,6 +270,36 @@ users/
 
 ---
 
+## 🧪 Testing
+
+El módulo de usuarios cuenta con pruebas unitarias completas:
+
+```bash
+# Ejecutar solo pruebas de usuarios
+npm run test:users
+
+# Ejecutar con cobertura
+npm run test:coverage
+```
+
+### Cobertura de Tests
+
+- **UsersService**: 17 pruebas
+  - CU09 (Crear Usuario): 3 tests
+  - CU10 (Editar Usuario): 3 tests
+  - CU11 (Desactivar Usuario): 4 tests
+  - CU18 (Buscar Usuarios): 2 tests
+  - Funcionalidades adicionales: 5 tests
+
+- **UsersController**: 9 pruebas
+  - Endpoints de API
+  - Validación de parámetros
+  - Manejo de errores
+
+**Total: 26 pruebas pasando** ✅
+
+---
+
 ## 📝 TODO
 
 - [ ] Implementar middleware de autorización por roles

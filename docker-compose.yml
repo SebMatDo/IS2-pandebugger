@@ -17,10 +17,22 @@ services:
       # Mount source code for hot reloading
       - ./src:/usr/src/app/src:delegated
       - ./tsconfig.json:/usr/src/app/tsconfig.json:ro
+      - ./.env.local:/usr/src/app/.env.local:ro
       # Prevent node_modules from being overwritten
       - /usr/src/app/node_modules
-    env_file:
-      - .env.local
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      API_PREFIX: /api/v1
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: pandebugger_dev
+      DB_USER: pandebugger_user
+      DB_PASSWORD: pandebugger_local_pass_2024
+      JWT_SECRET: your_jwt_secret_change_this_in_production_use_long_random_string
+      JWT_EXPIRES_IN: 7d
+      LOG_LEVEL: info
+      CORS_ORIGIN: http://localhost:3000,http://localhost:5173
     networks:
       - pandebugger-network
     depends_on:

@@ -44,6 +44,11 @@ npm run test:verbose
 npm run test:auth
 ```
 
+### Ejecutar solo pruebas de usuarios
+```bash
+npm run test:users
+```
+
 ## Casos de Prueba Implementados
 
 ### 🔐 AuthService (auth.service.test.ts)
@@ -71,6 +76,46 @@ npm run test:auth
 - ✅ Error cuando contraseña actual es incorrecta
 - ✅ Error cuando nueva contraseña es débil
 - ✅ Validación de fortaleza (mayúscula, número, símbolo)
+
+### 👥 UsersService (users.service.test.ts)
+
+#### CU09 - Crear Usuario
+- ✅ Crear usuario exitosamente
+- ✅ Error cuando email ya existe
+- ✅ Error cuando contraseña es débil
+
+#### CU18 - Buscar Usuarios
+- ✅ Obtener todos los usuarios
+- ✅ Filtrar usuarios por estado
+
+#### CU10 - Editar Usuario
+- ✅ Actualizar usuario exitosamente
+- ✅ Error cuando usuario no existe
+- ✅ Error cuando email ya existe
+
+#### CU11 - Desactivar Usuario
+- ✅ Desactivar usuario exitosamente
+- ✅ Error cuando usuario no existe
+- ✅ Error cuando intentas desactivarte a ti mismo
+- ✅ Error cuando usuario ya está inactivo
+
+#### Funcionalidades Adicionales
+- ✅ Obtener usuario por ID
+- ✅ Activar usuario
+- ✅ Obtener todos los roles
+
+### 🎮 UsersController (users.controller.test.ts)
+
+#### Endpoints de API
+- ✅ `POST /api/v1/users` - Crear usuario (CU09)
+- ✅ `GET /api/v1/users` - Listar usuarios (CU18)
+- ✅ `GET /api/v1/users/:id` - Obtener usuario por ID
+- ✅ `PUT /api/v1/users/:id` - Actualizar usuario (CU10)
+- ✅ `DELETE /api/v1/users/:id` - Desactivar usuario (CU11)
+- ✅ `PATCH /api/v1/users/:id/activate` - Activar usuario
+- ✅ `GET /api/v1/users/roles` - Obtener roles
+- ✅ Validación de ID inválido
+- ✅ Filtros por estado y rol
 
 ### 🎮 AuthController (auth.controller.test.ts)
 
@@ -199,11 +244,11 @@ npm run build
 ## Próximos Pasos
 
 - [ ] Tests para módulo de libros (CU01-CU05)
-- [ ] Tests para módulo de usuarios (CU09-CU11)
 - [ ] Tests de integración E2E con base de datos de prueba
-- [ ] Tests para middleware de autenticación
+- [ ] Tests para middleware de autenticación y autorización
 - [ ] Tests para repositorios
 - [ ] CI/CD con GitHub Actions
+- [ ] Aumentar cobertura de código > 90%
 
 ## Recursos
 
