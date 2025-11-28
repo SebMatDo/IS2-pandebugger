@@ -1,67 +1,151 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response } from 'express';
 import { booksService } from './books.service';
-import { createSuccessResponse } from '../../shared/utils/response';
-import { CreateBookDto, UpdateBookDto } from './books.types';
+import { BookRequest, CreateBookDto, UpdateBookDto } from './books.types';
+import { AppError } from '../../shared/middleware/errorHandler';
 
 export class BooksController {
-  async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const books = await booksService.findAll();
-      res.status(200).json(createSuccessResponse(books));
-    } catch (error) {
-      next(error);
-    }
+  /**
+   * POST /api/v1/books - Create book (CU01)
+   */
+  async createBook(req: BookRequest, res: Response): Promise<void> {
+    const dto: CreateBookDto = req.body;
+    const userId = req.user!.userId;
+
+    const book = await booksService.createBook(dto, userId);
+
+    res.status(201).json({
+      success: true,
+      message: 'Libro registrado exitosamente.',
+      data: book,
+    });
   }
 
-  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const book = await booksService.findById(req.params.id);
-      res.status(200).json(createSuccessResponse(book));
-    } catch (error) {
-      next(error);
-    }
+  /**
+   * GET /api/v1/books - List/search books (CU17)
+   * Public endpoint with optional authentication
+   */
+  async getAllBooks(req: BookRequest, res: Response): Promise<void> {
+    const filters = {
+      estado_id: req.query.estado_id ? Number(req.query.estado_id) : undefined,
+      categoria_id: req.query.categoria_id ? Number(req.query.categoria_id) : undefined,
+      titulo: req.query.titulo as string | undefined,
+      autor: req.query.autor as string | undefined,
+      isbn: req.query.isbn as string | undefined,
+    };
+
+    const userRole = req.user?.rolNombre;
+
+    const books = await booksService.getAllBooks(filters, userRole);
+
+    res.status(200).json({
+      success: true,
+      data: books,
+      count: books.length,
+    });
   }
 
-  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const dto: CreateBookDto = req.body;
-      const book = await booksService.create(dto);
-      res.status(201).json(createSuccessResponse(book, 'Book created successfully'));
-    } catch (error) {
-      next(error);
+  /**
+   * GET /api/v1/books/:id - Get book by ID (CU22)
+   * Public endpoint with optional authentication
+   */
+  async getBookById(req: BookRequest, res: Response): Promise<void> {
+    const id = Number(req.params.id);
+
+    if (isNaN(id)) {
+      throw new AppError('ID de libro inválido.', 400);
     }
+
+    const userRole = req.user?.rolNombre;
+
+    const book = await booksService.getBookById(id, userRole);
+
+    res.status(200).json({
+      success: true,
+      data: book,
+    });
   }
 
-  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const dto: UpdateBookDto = req.body;
-      const book = await booksService.update(req.params.id, dto);
-      res.status(200).json(createSuccessResponse(book, 'Book updated successfully'));
-    } catch (error) {
-      next(error);
+  /**
+   * PUT /api/v1/books/:id - Update book (CU12)
+   */
+  async updateBook(req: BookRequest, res: Response): Promise<void> {
+    const id = Number(req.params.id);
+
+    if (isNaN(id)) {
+      throw new AppError('ID de libro inválido.', 400);
     }
+
+    const dto: UpdateBookDto = req.body;
+    const userId = req.user!.userId;
+
+    const book = await booksService.updateBook(id, dto, userId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Libro actualizado exitosamente.',
+      data: book,
+    });
   }
 
-  async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      await booksService.delete(req.params.id);
-      res.status(200).json(createSuccessResponse(null, 'Book deleted successfully'));
-    } catch (error) {
-      next(error);
+  /**
+   * DELETE /api/v1/books/:id - Deactivate book (CU13)
+   */
+  async deactivateBook(req: BookRequest, res: Response): Promise<void> {
+    const id = Number(req.params.id);
+
+    if (isNaN(id)) {
+      throw new AppError('ID de libro inválido.', 400);
     }
+
+    const userId = req.user!.userId;
+
+    await booksService.deactivateBook(id, userId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Libro desactivado exitosamente.',
+    });
   }
 
-  async search(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const query = req.query.q as string;
-      if (!query) {
-        res.status(400).json({ status: 'error', message: 'Query parameter "q" is required' });
-        return;
-      }
-      const books = await booksService.search(query);
-      res.status(200).json(createSuccessResponse(books));
-    } catch (error) {
-      next(error);
-    }
+  /**
+   * GET /api/v1/books/states - Get all book states
+   */
+  async getAllStates(req: BookRequest, res: Response): Promise<void> {
+    const states = await booksService.getAllStates();
+
+    res.status(200).json({
+      success: true,
+      data: states,
+    });
+  }
+
+  /**
+   * GET /api/v1/books/categories - Get all categories
+   */
+  async getAllCategories(req: BookRequest, res: Response): Promise<void> {
+    const categories = await booksService.getAllCategories();
+
+    res.status(200).json({
+      success: true,
+      data: categories,
+    });
+  }
+
+  /**
+   * POST /api/v1/books/categories - Create category (CU25)
+   */
+  async createCategory(req: BookRequest, res: Response): Promise<void> {
+    const { nombre, descripcion } = req.body;
+    const userId = req.user!.userId;
+
+    const category = await booksService.createCategory(nombre, descripcion, userId);
+
+    res.status(201).json({
+      success: true,
+      message: 'Categoría creada exitosamente.',
+      data: category,
+    });
   }
 }
+
+export const booksController = new BooksController();

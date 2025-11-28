@@ -1,64 +1,397 @@
-import { Book, CreateBookDto, UpdateBookDto } from './books.types';
+import { db } from '../../shared/database/connection';
 import { AppError } from '../../shared/middleware/errorHandler';
+import { CreateBookDto, UpdateBookDto, BookResponse, BookFilters } from './books.types';
 
-// Mock data store (replace with actual database layer)
-class BooksService {
-  private books: Book[] = [];
-
-  async findAll(): Promise<Book[]> {
-    return this.books;
-  }
-
-  async findById(id: string): Promise<Book> {
-    const book = this.books.find((b) => b.id === id);
-    if (!book) {
-      throw new AppError('Book not found', 404);
-    }
-    return book;
-  }
-
-  async create(dto: CreateBookDto): Promise<Book> {
-    const newBook: Book = {
-      id: Date.now().toString(), // Simple ID generation, use UUID in production
-      ...dto,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+export class BooksService {
+  /**
+   * Convert database row to BookResponse
+   */
+  private toBookResponse(row: any): BookResponse {
+    return {
+      id: row.id,
+      isbn: row.isbn || '',
+      titulo: row.titulo,
+      autor: row.autor,
+      fecha: row.fecha,
+      numero_paginas: row.numero_paginas,
+      estanteria: row.estanteria,
+      espacio: row.espacio,
+      categoria: row.categoria_id ? {
+        id: row.categoria_id,
+        nombre: row.categoria_nombre,
+        descripcion: row.categoria_descripcion,
+      } : undefined,
+      estado: {
+        id: row.estado_id,
+        nombre: row.estado_nombre,
+        descripcion: row.estado_descripcion,
+        orden: row.estado_orden,
+      },
+      directorio_pdf: row.directorio_pdf || null,
     };
-    this.books.push(newBook);
-    return newBook;
   }
 
-  async update(id: string, dto: UpdateBookDto): Promise<Book> {
-    const index = this.books.findIndex((b) => b.id === id);
-    if (index === -1) {
-      throw new AppError('Book not found', 404);
-    }
-
-    this.books[index] = {
-      ...this.books[index],
-      ...dto,
-      updatedAt: new Date(),
-    };
-
-    return this.books[index];
-  }
-
-  async delete(id: string): Promise<void> {
-    const index = this.books.findIndex((b) => b.id === id);
-    if (index === -1) {
-      throw new AppError('Book not found', 404);
-    }
-    this.books.splice(index, 1);
-  }
-
-  async search(query: string): Promise<Book[]> {
-    const lowerQuery = query.toLowerCase();
-    return this.books.filter(
-      (book) =>
-        book.title.toLowerCase().includes(lowerQuery) ||
-        book.author.toLowerCase().includes(lowerQuery) ||
-        book.description?.toLowerCase().includes(lowerQuery)
+  /**
+   * Get default "Registrado" state ID
+   */
+  private async getDefaultStateId(): Promise<number> {
+    const result = await db.query<{ id: number }>(
+      'SELECT id FROM estados_libro WHERE nombre = $1',
+      ['Registrado']
     );
+
+    if (result.rows.length === 0) {
+      throw new AppError('Estado inicial "Registrado" no encontrado', 500);
+    }
+
+    return result.rows[0].id;
+  }
+
+  /**
+   * Check if category exists
+   */
+  private async categoryExists(categoryId: number): Promise<boolean> {
+    const result = await db.query('SELECT id FROM categoria WHERE id = $1', [categoryId]);
+    return result.rows.length > 0;
+  }
+
+  /**
+   * Check if state exists
+   */
+  private async stateExists(stateId: number): Promise<boolean> {
+    const result = await db.query('SELECT id FROM estados_libro WHERE id = $1', [stateId]);
+    return result.rows.length > 0;
+  }
+
+  /**
+   * CU01 - Register Book (Registrar Libro)
+   * Creates a new book with estado "Registrado"
+   */
+  async createBook(dto: CreateBookDto, creatorUserId: number): Promise<BookResponse> {
+    // Validate required fields
+    if (!dto.titulo || !dto.autor || !dto.numero_paginas || !dto.estanteria || !dto.espacio) {
+      throw new AppError('Por favor complete todos los campos obligatorios.', 400);
+    }
+
+    // Validate numero_paginas
+    if (dto.numero_paginas <= 0) {
+      throw new AppError('El número de páginas debe ser un número entero positivo.', 400);
+    }
+
+    // Validate category if provided
+    if (dto.categoria_id && !(await this.categoryExists(dto.categoria_id))) {
+      throw new AppError('La categoría seleccionada no existe.', 400);
+    }
+
+    // Get default state "Registrado"
+    const estadoId = await this.getDefaultStateId();
+
+    // Insert book
+    const result = await db.query<any>(
+      `INSERT INTO libros (
+        isbn, titulo, autor, fecha, numero_paginas, 
+        estanteria, espacio, categoria_id, estado_id
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *`,
+      [
+        dto.isbn || '',
+        dto.titulo,
+        dto.autor,
+        dto.fecha,
+        dto.numero_paginas,
+        dto.estanteria,
+        dto.espacio,
+        dto.categoria_id || null,
+        estadoId,
+      ]
+    );
+
+    const newBook = result.rows[0];
+
+    // TODO: Log to historial
+    // await writeToHistorial(creatorUserId, accionCrear.id, ttLibro.id, newBook.id);
+
+    // Fetch complete book data with relations (skip permission check for internal call)
+    return this.getBookById(newBook.id, undefined, true);
+  }
+
+  /**
+   * CU17 - Search/List Books (Buscar Libros)
+   * Get all books with optional filters
+   * Public books (estado="Publicado") can be accessed by anyone
+   */
+  async getAllBooks(filters?: BookFilters, userRole?: string): Promise<BookResponse[]> {
+    let query = `
+      SELECT 
+        l.*,
+        e.nombre as estado_nombre,
+        e.descripcion as estado_descripcion,
+        e.orden as estado_orden,
+        c.nombre as categoria_nombre,
+        c.descripcion as categoria_descripcion
+      FROM libros l
+      LEFT JOIN estados_libro e ON l.estado_id = e.id
+      LEFT JOIN categoria c ON l.categoria_id = c.id
+      WHERE 1=1
+    `;
+
+    const params: any[] = [];
+    let paramCount = 1;
+
+    // Non-authenticated users or users without special roles can only see published books
+    const canSeeAll = userRole && ['Admin', 'Bibliotecario', 'Digitalizador', 'Revisor', 'Restaurador'].includes(userRole);
+    
+    if (!canSeeAll) {
+      query += ` AND e.nombre = 'Publicado'`;
+    }
+
+    // Apply filters
+    if (filters?.estado_id) {
+      query += ` AND l.estado_id = $${paramCount}`;
+      params.push(filters.estado_id);
+      paramCount++;
+    }
+
+    if (filters?.categoria_id) {
+      query += ` AND l.categoria_id = $${paramCount}`;
+      params.push(filters.categoria_id);
+      paramCount++;
+    }
+
+    if (filters?.titulo) {
+      query += ` AND l.titulo ILIKE $${paramCount}`;
+      params.push(`%${filters.titulo}%`);
+      paramCount++;
+    }
+
+    if (filters?.autor) {
+      query += ` AND l.autor ILIKE $${paramCount}`;
+      params.push(`%${filters.autor}%`);
+      paramCount++;
+    }
+
+    if (filters?.isbn) {
+      query += ` AND l.isbn ILIKE $${paramCount}`;
+      params.push(`%${filters.isbn}%`);
+      paramCount++;
+    }
+
+    query += ' ORDER BY l.id DESC';
+
+    const result = await db.query<any>(query, params);
+
+    return result.rows.map((row) => this.toBookResponse(row));
+  }
+
+  /**
+   * CU22 - Query Book (Consultar Libro)
+   * Get book by ID
+   * Public books can be accessed by anyone
+   */
+  async getBookById(id: number, userRole?: string, skipPermissionCheck: boolean = false): Promise<BookResponse> {
+    const result = await db.query<any>(
+      `SELECT 
+        l.*,
+        e.nombre as estado_nombre,
+        e.descripcion as estado_descripcion,
+        e.orden as estado_orden,
+        c.nombre as categoria_nombre,
+        c.descripcion as categoria_descripcion
+      FROM libros l
+      LEFT JOIN estados_libro e ON l.estado_id = e.id
+      LEFT JOIN categoria c ON l.categoria_id = c.id
+      WHERE l.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      throw new AppError('Libro no encontrado.', 404);
+    }
+
+    const book = result.rows[0];
+
+    // Check if user can access this book (skip for internal calls)
+    if (!skipPermissionCheck) {
+      const canSeeAll = userRole && ['Admin', 'Bibliotecario', 'Digitalizador', 'Revisor', 'Restaurador'].includes(userRole);
+      
+      if (!canSeeAll && book.estado_nombre !== 'Publicado') {
+        throw new AppError('No tiene permisos para ver este libro.', 403);
+      }
+    }
+
+    return this.toBookResponse(book);
+  }
+
+  /**
+   * CU12 - Modify Book (Modificar Libro)
+   * Update book information
+   * Only Admin and Bibliotecario can modify
+   */
+  async updateBook(id: number, dto: UpdateBookDto, editorUserId: number): Promise<BookResponse> {
+    // Check if book exists
+    const bookCheck = await db.query('SELECT id FROM libros WHERE id = $1', [id]);
+    if (bookCheck.rows.length === 0) {
+      throw new AppError('Libro no encontrado.', 404);
+    }
+
+    // Validate numero_paginas if provided
+    if (dto.numero_paginas !== undefined && dto.numero_paginas <= 0) {
+      throw new AppError('El número de páginas debe ser un número entero positivo.', 400);
+    }
+
+    // Validate category if provided
+    if (dto.categoria_id && !(await this.categoryExists(dto.categoria_id))) {
+      throw new AppError('La categoría seleccionada no existe.', 400);
+    }
+
+    // Validate state if provided
+    if (dto.estado_id && !(await this.stateExists(dto.estado_id))) {
+      throw new AppError('El estado seleccionado no existe.', 400);
+    }
+
+    // Build update query dynamically
+    const fields: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (dto.isbn !== undefined) {
+      fields.push(`isbn = $${paramCount}`);
+      values.push(dto.isbn);
+      paramCount++;
+    }
+
+    if (dto.titulo !== undefined) {
+      fields.push(`titulo = $${paramCount}`);
+      values.push(dto.titulo);
+      paramCount++;
+    }
+
+    if (dto.autor !== undefined) {
+      fields.push(`autor = $${paramCount}`);
+      values.push(dto.autor);
+      paramCount++;
+    }
+
+    if (dto.fecha !== undefined) {
+      fields.push(`fecha = $${paramCount}`);
+      values.push(dto.fecha);
+      paramCount++;
+    }
+
+    if (dto.numero_paginas !== undefined) {
+      fields.push(`numero_paginas = $${paramCount}`);
+      values.push(dto.numero_paginas);
+      paramCount++;
+    }
+
+    if (dto.estanteria !== undefined) {
+      fields.push(`estanteria = $${paramCount}`);
+      values.push(dto.estanteria);
+      paramCount++;
+    }
+
+    if (dto.espacio !== undefined) {
+      fields.push(`espacio = $${paramCount}`);
+      values.push(dto.espacio);
+      paramCount++;
+    }
+
+    if (dto.categoria_id !== undefined) {
+      fields.push(`categoria_id = $${paramCount}`);
+      values.push(dto.categoria_id);
+      paramCount++;
+    }
+
+    if (dto.estado_id !== undefined) {
+      fields.push(`estado_id = $${paramCount}`);
+      values.push(dto.estado_id);
+      paramCount++;
+    }
+
+    if (dto.directorio_pdf !== undefined) {
+      fields.push(`directorio_pdf = $${paramCount}`);
+      values.push(dto.directorio_pdf);
+      paramCount++;
+    }
+
+    if (fields.length === 0) {
+      throw new AppError('No se proporcionaron campos para actualizar.', 400);
+    }
+
+    // Add ID to values
+    values.push(id);
+
+    const query = `UPDATE libros SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING id`;
+    await db.query(query, values);
+
+    // TODO: Log to historial
+    // await writeToHistorial(editorUserId, accionEditar.id, ttLibro.id, id);
+
+    return this.getBookById(id, undefined, true);
+  }
+
+  /**
+   * CU13 - Deactivate Book (Desactivar Libro)
+   * Soft delete - changes state to inactive or removes from catalog
+   * Only Admin and Bibliotecario can deactivate
+   */
+  async deactivateBook(id: number, deactivatorUserId: number): Promise<void> {
+    // Check if book exists
+    const bookCheck = await db.query('SELECT id FROM libros WHERE id = $1', [id]);
+    if (bookCheck.rows.length === 0) {
+      throw new AppError('Libro no encontrado.', 404);
+    }
+
+    // For now, we'll just delete the book (can implement soft delete later)
+    await db.query('DELETE FROM libros WHERE id = $1', [id]);
+
+    // TODO: Log to historial
+    // await writeToHistorial(deactivatorUserId, accionDesactivar.id, ttLibro.id, id);
+  }
+
+  /**
+   * Get all book states
+   */
+  async getAllStates(): Promise<Array<{ id: number; nombre: string; descripcion: string; orden: number }>> {
+    const result = await db.query<{ id: number; nombre: string; descripcion: string; orden: number }>(
+      'SELECT id, nombre, descripcion, orden FROM estados_libro ORDER BY orden ASC'
+    );
+    return result.rows;
+  }
+
+  /**
+   * Get all categories
+   */
+  async getAllCategories(): Promise<Array<{ id: number; nombre: string; descripcion: string }>> {
+    const result = await db.query<{ id: number; nombre: string; descripcion: string }>(
+      'SELECT id, nombre, descripcion FROM categoria ORDER BY nombre ASC'
+    );
+    return result.rows;
+  }
+
+  /**
+   * CU25 - Create Category
+   */
+  async createCategory(nombre: string, descripcion: string, creatorUserId: number): Promise<{ id: number; nombre: string; descripcion: string }> {
+    if (!nombre) {
+      throw new AppError('El nombre de la categoría es obligatorio.', 400);
+    }
+
+    // Check if category already exists
+    const existing = await db.query('SELECT id FROM categoria WHERE nombre = $1', [nombre]);
+    if (existing.rows.length > 0) {
+      throw new AppError('Ya existe una categoría con ese nombre.', 409);
+    }
+
+    const result = await db.query<{ id: number; nombre: string; descripcion: string }>(
+      'INSERT INTO categoria (nombre, descripcion) VALUES ($1, $2) RETURNING *',
+      [nombre, descripcion || '']
+    );
+
+    // TODO: Log to historial
+
+    return result.rows[0];
   }
 }
 
