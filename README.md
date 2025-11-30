@@ -50,6 +50,8 @@ curl http://localhost:3000/api/v1/health
 - admin@pandebugger.com (Admin)
 - maria.gonzalez@pandebugger.com (Bibliotecario)
 - carlos.ramirez@pandebugger.com (Digitalizador)
+- ana.martinez@pandebugger.com (Revisor)
+- luis.fernandez@pandebugger.com (Restaurador)
 
 👉 **For detailed instructions, see [Getting Started Guide](./docs/GETTING_STARTED.md)**
 
