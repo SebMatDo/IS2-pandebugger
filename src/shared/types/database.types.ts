@@ -136,7 +136,9 @@ export interface Task {
   observaciones: string;
   libro?: Book;
   usuario?: User;
-  nuevo_estado?: BookState;
+  estado?: BookState;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 export interface CreateTaskDto {
