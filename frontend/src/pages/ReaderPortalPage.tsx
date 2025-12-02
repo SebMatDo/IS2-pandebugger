@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import BookCard from '../components/BookCard'
 import { apiGet, apiPost } from '../api/client'
 
@@ -39,12 +40,19 @@ type Book = {
 // }
 
 export default function ReaderPortalPage() {
+  const navigate = useNavigate()
+
   const [books, setBooks] = useState<Book[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return !!localStorage.getItem('token')
+  })
+
+  const [userRoleId, setUserRoleId] = useState<number | null>(() => {
+    const raw = localStorage.getItem('userRoleId')
+    return raw ? Number(raw) : null
   })
 
   const [showLogin, setShowLogin] = useState(false)
@@ -109,38 +117,57 @@ export default function ReaderPortalPage() {
     loadBooks()
   }, [])
 
-  async function handleLogin(e: FormEvent) {
+  type LoginResponse = {
+  status: string
+  data: {
+    user: {
+      id: number
+      nombres: string
+      apellidos: string
+      correo_electronico: string
+      rol: {
+        id: number
+        nombre: string
+      }
+    }
+    token: string
+    expiresIn: string
+  }
+  message: string
+  timestamp: string
+}
+
+async function handleLogin(e: FormEvent) {
   e.preventDefault()
   setLoginLoading(true)
   setLoginError(null)
 
   try {
-    // De momento no nos fiamos del tipo, usamos any para ver la forma real
-    const res: any = await apiPost('/auth/login', { email, password })
+    const res = await apiPost<LoginResponse>('/auth/login', { email, password })
 
     console.log('LOGIN RESPONSE ->', res)
 
-    // Intentamos obtener el token en varios formatos posibles
-    let token: string | undefined
-
-    // Caso 1: { success: true, data: { token: '...' } }
-    if (res?.data?.token) {
-      token = res.data.token
-    }
-    // Caso 2: { token: '...' }
-    else if (res?.token) {
-      token = res.token
-    }
+    const token = res.data?.token
+    const roleId = res.data?.user?.rol?.id ?? null
 
     if (!token) {
-      // Si no pudimos sacar token de la respuesta, consideramos que falló
       throw new Error('Credenciales inválidas')
     }
 
+    // guardar token
     localStorage.setItem('token', token)
     setIsAuthenticated(true)
-    setShowLogin(false)
 
+    // guardar roleId (1..6)
+    if (roleId !== null) {
+      localStorage.setItem('userRoleId', String(roleId))
+      setUserRoleId(roleId)
+    } else {
+      localStorage.removeItem('userRoleId')
+      setUserRoleId(null)
+    }
+
+    setShowLogin(false)
     await loadBooks()
   } catch (err: any) {
     console.error(err)
@@ -151,12 +178,23 @@ export default function ReaderPortalPage() {
 }
 
 
+
   function handleLogout() {
     localStorage.removeItem('token')
+    localStorage.removeItem('userRoleId')
     setIsAuthenticated(false)
+    setUserRoleId(null)
     setBooks([])
     setError(null)
   }
+
+
+  const canSeeAdminButton =
+    isAuthenticated &&
+    userRoleId !== null &&
+    userRoleId >= 1 &&
+    userRoleId <= 5
+
 
   return (
     <div className="reader-layout">
@@ -164,6 +202,16 @@ export default function ReaderPortalPage() {
       <header className="reader-navbar">
         <div className="reader-navbar-left">
           <span className="reader-logo">Digital Library Pandebugger</span>
+
+          {canSeeAdminButton && (
+          <button
+            className="reader-admin-link"
+            onClick={() => navigate('/admin')}
+          >
+            Admin Dashboard
+          </button>
+          )}
+
         </div>
         <div className="reader-navbar-right">
           <button className="reader-nav-link reader-nav-link-active">Home</button>
@@ -243,9 +291,9 @@ export default function ReaderPortalPage() {
           >
             <h2 className="login-title">Iniciar sesión</h2>
             <p className="login-subtitle">
-              Usa uno de los usuarios de prueba del backend (por ejemplo
+              Utiliza las credenciales autorizadas
               <br />
-              <code>admin@pandebugger.com / Test123!</code>)
+              <code>admin@pandebugger.com / Test123!</code>
             </p>
 
             <form className="login-form" onSubmit={handleLogin}>

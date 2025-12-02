@@ -32,6 +32,23 @@ body {
   border-bottom: 1px solid #e5e7eb;
 }
 
+.reader-navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.reader-admin-link {
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #0f172a;
+  color: #e5e7eb;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+
 .reader-logo {
   font-weight: 600;
   font-size: 1.1rem;
