@@ -1,0 +1,296 @@
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #111827;
+  background-color: #f3f4f6;
+}
+
+/* Layout general */
+
+body {
+  margin: 0;
+  background: #f3f4f6;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.reader-layout {
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #f9fafb 0%, #eef2ff 220px, #f9fafb 220px);
+}
+
+/* Navbar */
+
+.reader-navbar {
+  height: 64px;
+  padding: 0 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.reader-logo {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.reader-navbar-right {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.reader-nav-link {
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+}
+
+.reader-nav-link-active {
+  color: #111827;
+  font-weight: 600;
+}
+
+/* Hero */
+
+.reader-main {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 3rem;
+}
+
+.reader-hero {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.reader-hero-title {
+  font-size: 1.7rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.reader-hero-subtitle {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+/* Search bar */
+
+.reader-search-bar {
+  margin: 0 auto;
+  max-width: 640px;
+  display: flex;
+  background: #ffffff;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
+}
+
+.reader-search-input {
+  flex: 1;
+  border: none;
+  padding: 0.85rem 1.25rem;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.reader-search-input::placeholder {
+  color: #9ca3af;
+}
+
+.reader-search-button {
+  border: none;
+  padding: 0 1.75rem;
+  background: #020617;
+  color: #f9fafb;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+/* Grid de libros */
+
+.reader-books-section {
+  margin-top: 2rem;
+}
+
+.reader-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.reader-books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Tarjeta de libro */
+
+.book-card {
+  background: #ffffff;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+}
+
+.book-card-image-wrapper {
+  width: 100%;
+  padding-top: 130%;
+  position: relative;
+  overflow: hidden;
+}
+
+.book-card-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-card-body {
+  padding: 0.8rem 0.9rem 1rem;
+}
+
+.book-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+}
+
+.book-card-author {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.book-card-year {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 0.15rem 0 0.6rem;
+}
+
+.book-card-button {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.reader-login-button {
+  margin-left: 1rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #020617;
+  color: #f9fafb;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* Modal de login */
+
+.login-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.login-modal {
+  width: 360px;
+  background: #020617;
+  color: #f9fafb;
+  border-radius: 1rem;
+  padding: 1.5rem 1.75rem 1.75rem;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
+}
+
+.login-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.login-subtitle {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.login-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.login-input {
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.5rem;
+  border: 1px solid #4b5563;
+  background: #020617;
+  color: #f9fafb;
+  font-size: 0.9rem;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: #22c55e;
+}
+
+.login-error {
+  font-size: 0.8rem;
+  color: #f97373;
+}
+
+.login-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.login-cancel,
+.login-submit {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.login-cancel {
+  background: transparent;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+.login-submit {
+  background: #22c55e;
+  color: #022c22;
+  font-weight: 600;
+}

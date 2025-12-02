@@ -1,0 +1,293 @@
+import { type FormEvent, useEffect, useState } from 'react'
+import BookCard from '../components/BookCard'
+import { apiGet, apiPost } from '../api/client'
+
+type ApiBook = {
+  id: number
+  isbn: string | null
+  titulo: string
+  autor: string
+  fecha: string
+  numero_paginas: number | null
+  estado_id: number
+  estanteria: string | null
+  espacio: string | null
+  categoria_id: number | null
+  directorio_pdf: string | null
+  created_at: string
+  updated_at: string
+}
+
+type Book = {
+  id: number
+  title: string
+  author: string
+  year: number | null
+  coverUrl: string
+}
+
+// type LoginResponse = {
+//   success: boolean
+//   data: {
+//     token: string
+//     user: {
+//       id: number
+//       email: string
+//       rol_nombre: string
+//     }
+//   }
+// }
+
+export default function ReaderPortalPage() {
+  const [books, setBooks] = useState<Book[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return !!localStorage.getItem('token')
+  })
+
+  const [showLogin, setShowLogin] = useState(false)
+  const [email, setEmail] = useState('admin@pandebugger.com') // por ahora para probar
+  const [password, setPassword] = useState('Test123!')
+  const [loginLoading, setLoginLoading] = useState(false)
+  const [loginError, setLoginError] = useState<string | null>(null)
+
+  async function loadBooks() {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const res = await apiGet<{ success: boolean; data: ApiBook[] }>('/books')
+
+      if (!res.success) {
+        throw new Error('Error al cargar libros')
+      }
+
+      const mapped: Book[] = res.data.map((b) => {
+        let year: number | null = null
+        if (b.fecha) {
+          const d = new Date(b.fecha)
+          if (!isNaN(d.getTime())) {
+            year = d.getFullYear()
+          }
+        }
+
+        return {
+          id: b.id,
+          title: b.titulo,
+          author: b.autor,
+          year,
+          coverUrl: 'https://via.placeholder.com/240x320?text=Libro',
+        }
+      })
+
+      setBooks(mapped)
+    } catch (err: any) {
+      console.error(err)
+      if (err.status === 401) {
+        // Token inválido o no enviado
+        localStorage.removeItem('token')
+        setIsAuthenticated(false)
+        setError('Debes iniciar sesión para ver los libros.')
+      } else {
+        setError(err.message ?? 'Error al cargar libros')
+      }
+      setBooks([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Al montar la página: si ya hay token, cargamos libros
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      setLoading(false)
+      return
+    }
+    loadBooks()
+  }, [])
+
+  async function handleLogin(e: FormEvent) {
+  e.preventDefault()
+  setLoginLoading(true)
+  setLoginError(null)
+
+  try {
+    // De momento no nos fiamos del tipo, usamos any para ver la forma real
+    const res: any = await apiPost('/auth/login', { email, password })
+
+    console.log('LOGIN RESPONSE ->', res)
+
+    // Intentamos obtener el token en varios formatos posibles
+    let token: string | undefined
+
+    // Caso 1: { success: true, data: { token: '...' } }
+    if (res?.data?.token) {
+      token = res.data.token
+    }
+    // Caso 2: { token: '...' }
+    else if (res?.token) {
+      token = res.token
+    }
+
+    if (!token) {
+      // Si no pudimos sacar token de la respuesta, consideramos que falló
+      throw new Error('Credenciales inválidas')
+    }
+
+    localStorage.setItem('token', token)
+    setIsAuthenticated(true)
+    setShowLogin(false)
+
+    await loadBooks()
+  } catch (err: any) {
+    console.error(err)
+    setLoginError(err.message ?? 'Error al iniciar sesión')
+  } finally {
+    setLoginLoading(false)
+  }
+}
+
+
+  function handleLogout() {
+    localStorage.removeItem('token')
+    setIsAuthenticated(false)
+    setBooks([])
+    setError(null)
+  }
+
+  return (
+    <div className="reader-layout">
+      {/* Barra superior */}
+      <header className="reader-navbar">
+        <div className="reader-navbar-left">
+          <span className="reader-logo">Digital Library Pandebugger</span>
+        </div>
+        <div className="reader-navbar-right">
+          <button className="reader-nav-link reader-nav-link-active">Home</button>
+          <button className="reader-nav-link">Browse by Category</button>
+
+          {isAuthenticated ? (
+            <button className="reader-login-button" onClick={handleLogout}>
+              Cerrar sesión
+            </button>
+          ) : (
+            <button className="reader-login-button" onClick={() => setShowLogin(true)}>
+              Iniciar sesión
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Hero / buscador */}
+      <main className="reader-main">
+        <section className="reader-hero">
+          <h1 className="reader-hero-title">Explore our Digital Archive</h1>
+          <p className="reader-hero-subtitle">
+            Search through hundreds of digital books from our collection
+          </p>
+
+          <form
+            className="reader-search-bar"
+            onSubmit={(e) => {
+              e.preventDefault()
+              // luego conectamos con búsqueda real
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Search by title, author, or keyword…"
+              className="reader-search-input"
+            />
+            <button type="submit" className="reader-search-button">
+              Search
+            </button>
+          </form>
+        </section>
+
+        {/* Grid de libros */}
+        <section className="reader-books-section">
+          <h2 className="reader-section-title">Recently Published</h2>
+
+          {!isAuthenticated && !loading && (
+            <p>Inicia sesión para ver los libros disponibles.</p>
+          )}
+
+          {loading && <p>Cargando libros…</p>}
+          {error && <p style={{ color: '#b91c1c' }}>{error}</p>}
+
+          {isAuthenticated && !loading && !error && books.length > 0 && (
+            <div className="reader-books-grid">
+              {books.map((book) => (
+                <BookCard key={book.id} book={book} />
+              ))}
+            </div>
+          )}
+
+          {isAuthenticated && !loading && !error && books.length === 0 && (
+            <p>No hay libros publicados todavía.</p>
+          )}
+        </section>
+      </main>
+
+      {/* Modal de login */}
+      {showLogin && (
+        <div className="login-modal-backdrop" onClick={() => !loginLoading && setShowLogin(false)}>
+          <div
+            className="login-modal"
+            onClick={(e) => {
+              e.stopPropagation()
+            }}
+          >
+            <h2 className="login-title">Iniciar sesión</h2>
+            <p className="login-subtitle">
+              Usa uno de los usuarios de prueba del backend (por ejemplo
+              <br />
+              <code>admin@pandebugger.com / Test123!</code>)
+            </p>
+
+            <form className="login-form" onSubmit={handleLogin}>
+              <label className="login-label">
+                Email
+                <input
+                  type="email"
+                  className="login-input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </label>
+
+              <label className="login-label">
+                Contraseña
+                <input
+                  type="password"
+                  className="login-input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </label>
+
+              {loginError && <p className="login-error">{loginError}</p>}
+
+              <div className="login-actions">
+                <button
+                  type="button"
+                  className="login-cancel"
+                  onClick={() => setShowLogin(false)}
+                  disabled={loginLoading}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="login-submit" disabled={loginLoading}>
+                  {loginLoading ? 'Ingresando…' : 'Entrar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
