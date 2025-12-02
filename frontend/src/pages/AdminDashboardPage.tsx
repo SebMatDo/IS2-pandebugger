@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { apiGet } from '../api/client'
 import '../AdminDashboardPage.css'
 
@@ -178,7 +179,7 @@ function BookDetailView({ book, onBack }: BookDetailProps) {
             </a>
           ) : (
             <p className="book-detail-field-value">
-              No digital file available.
+              PDF no disponible.
             </p>
           )}
         </div>
@@ -188,6 +189,7 @@ function BookDetailView({ book, onBack }: BookDetailProps) {
 }
 
 export default function AdminDashboardPage() {
+  const navigate = useNavigate()
   const [cards, setCards] = useState<Card[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -249,8 +251,18 @@ export default function AdminDashboardPage() {
         </div>
 
         <nav className="admin-sidebar-nav">
-          <button className="admin-nav-item admin-nav-item-active">Dashboard</button>
-          <button className="admin-nav-item">Books</button>
+          <button 
+          className="admin-nav-item admin-nav-item-active"
+          onClick={() => navigate('/admin')}
+          >
+            Dashboard
+          </button>
+
+          <button className="admin-nav-item"
+          onClick={() => navigate('/adminBooks')}
+          >
+            Books
+          </button>
           <button className="admin-nav-item">Assignments</button>
           <button className="admin-nav-item">Categories</button>
           <button className="admin-nav-item">Users</button>
