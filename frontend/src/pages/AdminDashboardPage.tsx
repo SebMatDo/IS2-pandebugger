@@ -53,147 +53,11 @@ const stages: Stage[] = [
   { id: 7, title: 'Published' },           // Publicado
 ]
 
-type BookDetailProps = {
-  book: BookFromApi
-  onBack: () => void
-}
-
-function BookDetailView({ book, onBack }: BookDetailProps) {
-  const fechaPublicacion = book.fecha
-    ? new Date(book.fecha).toLocaleDateString('es-CO')
-    : 'Sin fecha'
-
-  const categoria = book.categoria?.nombre ?? 'Sin categoría'
-  const categoriaDesc = book.categoria?.descripcion ?? ''
-  const estadoNombre = book.estado?.nombre ?? 'Sin estado'
-  const estadoDescripcion = book.estado?.descripcion ?? ''
-  const shelf =
-    [book.estanteria, book.espacio].filter(Boolean).join(' - ') || 'Sin ubicación'
-  const paginas =
-    typeof book.numero_paginas === 'number' ? book.numero_paginas : '—'
-
-  return (
-    <div className="book-detail">
-      {/* Barra superior */}
-      <header className="book-detail-header">
-        <button className="book-detail-back" onClick={onBack}>
-          ← Back to Dashboard
-        </button>
-
-        <div className="book-detail-header-main">
-          <div>
-            <h1 className="book-detail-title">{book.titulo}</h1>
-            <p className="book-detail-author">by {book.autor}</p>
-          </div>
-
-          <div className="book-detail-header-meta">
-            <div className="book-detail-meta-block">
-              <span className="book-detail-meta-label">Book ID</span>
-              <span className="book-detail-meta-value">
-                BK-{String(book.id).padStart(4, '0')}
-              </span>
-            </div>
-            <div className="book-detail-meta-block">
-              <span className="book-detail-meta-label">ISBN</span>
-              <span className="book-detail-meta-value">
-                {book.isbn ?? '—'}
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Timeline de etapas (decorativo por ahora) */}
-      <section className="book-detail-steps">
-        <div className="book-detail-step-row">
-          {stages.map((stage) => (
-            <div key={stage.id} className="book-detail-step">
-              <div
-                className={
-                  'book-detail-step-circle' +
-                  (book.estado?.id === stage.id ? ' book-detail-step-active' : '')
-                }
-              >
-                {stage.id}
-              </div>
-              <span className="book-detail-step-label">{stage.title}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Tarjetas de info */}
-      <section className="book-detail-grid">
-        <div className="book-detail-card">
-          <h2 className="book-detail-card-title">Catalog Information</h2>
-          <p>
-            <span className="book-detail-field-label">Category:</span>{' '}
-            <span className="book-detail-field-value">{categoria}</span>
-          </p>
-          {categoriaDesc && (
-            <p>
-              <span className="book-detail-field-label">Category details:</span>{' '}
-              <span className="book-detail-field-value">{categoriaDesc}</span>
-            </p>
-          )}
-          <p>
-            <span className="book-detail-field-label">Pages:</span>{' '}
-            <span className="book-detail-field-value">{paginas}</span>
-          </p>
-          <p>
-            <span className="book-detail-field-label">Publication date:</span>{' '}
-            <span className="book-detail-field-value">{fechaPublicacion}</span>
-          </p>
-        </div>
-
-        <div className="book-detail-card">
-          <h2 className="book-detail-card-title">Current Status</h2>
-          <p>
-            <span className="book-detail-field-label">Status:</span>{' '}
-            <span className="book-detail-field-value">{estadoNombre}</span>
-          </p>
-          {estadoDescripcion && (
-            <p>
-              <span className="book-detail-field-label">Details:</span>{' '}
-              <span className="book-detail-field-value">
-                {estadoDescripcion}
-              </span>
-            </p>
-          )}
-          <p>
-            <span className="book-detail-field-label">Location:</span>{' '}
-            <span className="book-detail-field-value">{shelf}</span>
-          </p>
-        </div>
-
-        <div className="book-detail-card">
-          <h2 className="book-detail-card-title">Digital File</h2>
-          {book.directorio_pdf ? (
-            <a
-              href={book.directorio_pdf}
-              target="_blank"
-              rel="noreferrer"
-              className="book-detail-link"
-            >
-              Open PDF
-            </a>
-          ) : (
-            <p className="book-detail-field-value">
-              PDF no disponible.
-            </p>
-          )}
-        </div>
-      </section>
-    </div>
-  )
-}
-
 export default function AdminDashboardPage() {
   const navigate = useNavigate()
   const [cards, setCards] = useState<Card[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedBook, setSelectedBook] = useState<BookFromApi | null>(null)
 
   useEffect(() => {
     async function loadBooks() {
@@ -259,7 +123,7 @@ export default function AdminDashboardPage() {
           </button>
 
           <button className="admin-nav-item"
-          onClick={() => navigate('/adminBooks')}
+          onClick={() => navigate('/admin/books')}
           >
             Books
           </button>
@@ -273,12 +137,6 @@ export default function AdminDashboardPage() {
 
       {/* Main */}
       <main className="admin-main">
-          {selectedBook ? (
-            <BookDetailView
-              book={selectedBook}
-              onBack={() => setSelectedBook(null)}
-            />
-          ) : (
             <>
               {loading && <p>Cargando libros…</p>}
               {error && <p style={{ color: 'red' }}>{error}</p>}
@@ -360,7 +218,11 @@ export default function AdminDashboardPage() {
                   <article
                     key={card.id}
                     className="admin-card"
-                    onClick={() => setSelectedBook(card.book)}
+                    onClick={() =>
+                      navigate(`/admin/books/${card.id}`, {
+                        state: { book: card.book },
+                      })
+                    }
                   >
 
                       <div className="admin-card-header">
@@ -403,7 +265,6 @@ export default function AdminDashboardPage() {
           })}
         </section>
         </>
-          )}
       </main>
     </div>
   )

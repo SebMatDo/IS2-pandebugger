@@ -58,6 +58,7 @@ export default function AdminBooksPage() {
   const navigate = useNavigate()
 
   const [rows, setRows] = useState<BookRow[]>([])
+  const [books, setBooks] = useState<BookFromApi[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -76,6 +77,8 @@ export default function AdminBooksPage() {
         if (!res.success) {
           throw new Error('Error al cargar libros')
         }
+
+        setBooks(res.data)
 
         const mapped: BookRow[] = res.data.map((b) => ({
           id: b.id,
@@ -179,8 +182,6 @@ export default function AdminBooksPage() {
         <section className="admin-books-toolbar">
           <div className="admin-books-toolbar-left">
             <button className="admin-secondary-button">Bulk Assign</button>
-            <button className="admin-secondary-button">Change Status</button>
-            <button className="admin-secondary-button">Export</button>
           </div>
 
           <div className="admin-books-toolbar-right">
@@ -252,29 +253,44 @@ export default function AdminBooksPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredRows.map((row) => (
-                  <tr key={row.id}>
-                    <td>{row.code}</td>
-                    <td>{row.title}</td>
-                    <td>{row.author}</td>
-                    <td>
-                      <span
-                        className={`admin-status-pill ${getStatusPillClass(
-                          row.statusId
-                        )}`}
-                      >
-                        {row.statusName || '—'}
-                      </span>
-                    </td>
-                    <td>{row.categoryName}</td>
-                    <td>—{/* aquí luego puedes poner el responsable real */}</td>
-                    <td>{row.updatedAt || '—'}</td>
-                    <td>
-                      <button className="admin-row-menu-button">⋮</button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredRows.map((row) => {
+                  const book = books.find((b) => b.id === row.id)
 
+                  return (
+                    <tr
+                      key={row.id}
+                      className="admin-books-row"
+                      onClick={() => {
+                        if (!book) return
+                        navigate(`/admin/books/${book.id}`, { state: { book } })
+                      }}
+                    >
+                      <td>{row.code}</td>
+                      <td>{row.title}</td>
+                      <td>{row.author}</td>
+                      <td>
+                        <span
+                          className={`admin-status-pill ${getStatusPillClass(
+                            row.statusId
+                          )}`}
+                        >
+                          {row.statusName || '—'}
+                        </span>
+                      </td>
+                      <td>{row.categoryName}</td>
+                      <td>—{/* aquí luego puedes poner el responsable real */}</td>
+                      <td>{row.updatedAt || '—'}</td>
+                      <td>
+                        <button
+                          className="admin-row-menu-button"
+                          onClick={(e) => e.stopPropagation()} // 👈 para que el menú no navegue
+                        >
+                          ⋮
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
                 {filteredRows.length === 0 && (
                   <tr>
                     <td colSpan={8} style={{ textAlign: 'center', padding: '1rem' }}>
