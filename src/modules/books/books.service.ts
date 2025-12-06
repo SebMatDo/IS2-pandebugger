@@ -28,6 +28,7 @@ export class BooksService {
         orden: row.estado_orden,
       },
       directorio_pdf: row.directorio_pdf || null,
+      directorio_img: row.directorio_img || null,
     };
   }
 
@@ -315,6 +316,12 @@ export class BooksService {
       paramCount++;
     }
 
+    if (dto.directorio_img !== undefined) {
+      fields.push(`directorio_img = $${paramCount}`);
+      values.push(dto.directorio_img);
+      paramCount++;
+    }
+
     if (fields.length === 0) {
       throw new AppError('No se proporcionaron campos para actualizar.', 400);
     }
@@ -450,6 +457,25 @@ async updateCategory(
   // TODO: Log to historial using modifierUserId
 
   return result.rows[0];
+}
+async getBookCoverPath(id: number): Promise<string> {
+    const result = await db.query<{ directorio_img: string }>(
+        'SELECT directorio_img FROM libros WHERE id = $1',
+        [id]
+    );
+
+    if (result.rows.length === 0) {
+        throw new AppError('Libro no encontrado.', 404);
+    }
+    
+    const coverPath = result.rows[0].directorio_img;
+    
+    if (!coverPath) {
+        // If the book exists but the path is NULL/empty in the DB
+        throw new AppError('Portada no disponible para este libro.', 404);
+    }
+    
+    return coverPath;
 }
 }
 

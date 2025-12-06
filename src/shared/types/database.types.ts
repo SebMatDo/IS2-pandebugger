@@ -47,6 +47,7 @@ export interface Book {
   espacio: string;
   categoria_id: number;
   directorio_pdf: string;
+  directorio_img: string;
   estado?: BookState;
   categoria?: Category;
 }
@@ -62,6 +63,7 @@ export interface CreateBookDto {
   categoria_id?: number;
   estado_id?: number; // defaults to "Registrado"
   directorio_pdf?: string;
+  directorio_img?: string;
 }
 
 export interface UpdateBookDto {
@@ -75,6 +77,7 @@ export interface UpdateBookDto {
   categoria_id?: number;
   estado_id?: number;
   directorio_pdf?: string;
+  directorio_img?: string;
 }
 
 // EstadoLibro (Book State) - from estados_libro table

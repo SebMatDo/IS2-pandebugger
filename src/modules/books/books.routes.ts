@@ -94,4 +94,14 @@ router.delete(
   asyncHandler(booksController.deactivateBook.bind(booksController))
 );
 
+/**
+ * GET /api/v1/books/:id/cover
+ * Serves the book cover image file.
+ */
+router.get(
+    '/:id/cover', // Path: /api/v1/books/:id/cover
+    authenticate,
+    asyncHandler(booksController.getBookCover.bind(booksController))
+);
+
 export default router;

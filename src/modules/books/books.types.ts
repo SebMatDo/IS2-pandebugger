@@ -24,6 +24,7 @@ export interface UpdateBookDto {
   categoria_id?: number;
   estado_id?: number;
   directorio_pdf?: string;
+  directorio_img?: string;
 }
 
 export interface BookResponse {
@@ -47,6 +48,7 @@ export interface BookResponse {
     orden: number;
   };
   directorio_pdf: string | null;
+  directorio_img: string | null;
 }
 
 export interface BookFilters {
