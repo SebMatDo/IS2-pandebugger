@@ -32,6 +32,17 @@ router.post(
 );
 
 /**
+ * PUT /api/v1/books/categories/:id - Update category
+ * Only Admin and Bibliotecario can modify categories
+ */
+router.put(
+  '/categories/:id',
+  authenticate,
+  requireRole(['Admin', 'Bibliotecario']),
+  asyncHandler(booksController.updateCategory.bind(booksController))
+);
+
+/**
  * Protected routes
  * Only authenticated users with specific roles can access
  */

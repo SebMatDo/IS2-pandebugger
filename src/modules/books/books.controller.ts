@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Response, NextFunction } from 'express';
 import { booksService } from './books.service';
 import { BookRequest, CreateBookDto, UpdateBookDto } from './books.types';
 import { AppError } from '../../shared/middleware/errorHandler';
@@ -146,6 +146,43 @@ export class BooksController {
       data: category,
     });
   }
+
+/**
+ * PUT /api/v1/books/categories/:id - Update category
+ * @param req The request object, containing category ID in params and update data in body.
+ * @param res The response object.
+ * @param next The next function for error handling.
+ */
+async updateCategory(req: BookRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const id = parseInt(req.params.id); // Get ID from URL parameters
+    
+    // 1. Validate ID
+    if (isNaN(id)) {
+      res.status(400).json({
+        success: false,
+        message: 'ID de categoría inválido.',
+      });
+      return;
+    }
+
+    // 2. Get update data and user ID for logging
+    const { nombre, descripcion } = req.body;
+
+    // 3. Call the service method
+    const updatedCategory = await booksService.updateCategory(id, nombre, descripcion);
+
+    // 4. Send successful response
+    res.status(200).json({
+      success: true,
+      message: 'Categoría actualizada exitosamente.',
+      data: updatedCategory,
+    });
+  } catch (error) {
+    // 5. Pass error to the Express error handler middleware
+    next(error);
+  }
+}
 }
 
 export const booksController = new BooksController();

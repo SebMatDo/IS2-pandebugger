@@ -393,6 +393,65 @@ export class BooksService {
 
     return result.rows[0];
   }
+
+// Assuming this is inside your service class (e.g., CategoriesService)
+
+// ... imports (AppError, db, etc.)
+
+/**
+ Update Category
+ */
+async updateCategory(
+  id: number,
+  nombre?: string, 
+  descripcion?: string, 
+
+): Promise<{ id: number; nombre: string; descripcion: string }> {
+  // 1. Validation and Existence Check
+  if (!id) {
+    throw new AppError('El ID de la categoría es obligatorio para la actualización.', 400);
+  }
+
+  // Fetch existing category to ensure it exists and get current values
+  const existing = await db.query<{ id: number; nombre: string; descripcion: string }>(
+    'SELECT id, nombre, descripcion FROM categoria WHERE id = $1', 
+    [id]
+  );
+  
+  if (existing.rows.length === 0) {
+    throw new AppError('Categoría no encontrada.', 404);
+  }
+  
+  const currentCategory = existing.rows[0];
+
+  // Determine which values to use: new value if provided, otherwise the current value
+  const newNombre = nombre !== undefined ? nombre.trim() : currentCategory.nombre;
+  const newDescripcion = descripcion !== undefined ? descripcion.trim() : currentCategory.descripcion;
+
+  // 2. Check for Duplicate Name (if name is being updated)
+  if (newNombre && newNombre !== currentCategory.nombre) {
+    const nameCheck = await db.query('SELECT id FROM categoria WHERE nombre = $1 AND id <> $2', [newNombre, id]);
+    if (nameCheck.rows.length > 0) {
+      throw new AppError('Ya existe otra categoría con el nombre proporcionado.', 409);
+    }
+  }
+
+  // 3. Database Update
+  const result = await db.query<{ id: number; nombre: string; descripcion: string }>(
+    'UPDATE categoria SET nombre = $1, descripcion = $2 WHERE id = $3 RETURNING *',
+    [newNombre, newDescripcion || '', id] // Use the new/current values
+  );
+
+  if (result.rows.length === 0) {
+    // Should not happen if the existence check passed, but good for safety
+    throw new AppError('Error al actualizar la categoría. La categoría podría no existir.', 500);
+  }
+
+  // TODO: Log to historial using modifierUserId
+
+  return result.rows[0];
 }
+}
+
 
 export const booksService = new BooksService();
