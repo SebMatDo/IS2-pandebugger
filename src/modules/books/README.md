@@ -2,15 +2,6 @@
 
 Este módulo maneja la gestión completa de libros en el sistema de digitalización, incluyendo registro, consulta, modificación y desactivación.
 
-## Casos de Uso Implementados
-
-- **CU01 - Registrar Libro**: Permite registrar nuevos libros en el sistema con estado inicial "Registrado"
-- **CU17 - Buscar Libros**: Permite listar y buscar libros con filtros (con acceso basado en roles)
-- **CU22 - Consultar Libro**: Permite consultar detalles de un libro específico
-- **CU12 - Modificar Libro**: Permite actualizar información de un libro existente
-- **CU13 - Desactivar Libro**: Permite desactivar/eliminar un libro del catálogo
-- **CU25 - Crear Categoría**: Permite crear nuevas categorías de libros
-
 ## Control de Acceso
 
 ### Endpoints Públicos (con autenticación opcional)

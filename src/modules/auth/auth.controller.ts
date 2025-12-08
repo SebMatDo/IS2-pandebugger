@@ -30,6 +30,20 @@ export class AuthController {
   }
 
   /**
+   * POST /api/v1/auth/login-anonymous
+   * Generate anonymous token for guest access
+   * Anonymous users can only view published books
+   */
+  async loginAnonymous(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await authService.loginAnonymous();
+      res.status(200).json(createSuccessResponse(result, 'Login anónimo exitoso'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * POST /api/v1/auth/change-password
    * Change password for authenticated user (CU20)
    */

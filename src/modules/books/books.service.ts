@@ -140,11 +140,11 @@ export class BooksService {
     const params: any[] = [];
     let paramCount = 1;
 
-    // Non-authenticated users or users without special roles can only see published books
+    // Non-authenticated users or users without special roles can only see available books
     const canSeeAll = userRole && ['Admin', 'Bibliotecario', 'Digitalizador', 'Revisor', 'Restaurador'].includes(userRole);
     
     if (!canSeeAll) {
-      query += ` AND e.nombre = 'Publicado'`;
+      query += ` AND e.nombre = 'Disponible'`;
     }
 
     // Apply filters
@@ -216,7 +216,7 @@ export class BooksService {
     if (!skipPermissionCheck) {
       const canSeeAll = userRole && ['Admin', 'Bibliotecario', 'Digitalizador', 'Revisor', 'Restaurador'].includes(userRole);
       
-      if (!canSeeAll && book.estado_nombre !== 'Publicado') {
+      if (!canSeeAll && book.estado_nombre !== 'Disponible') {
         throw new AppError('No tiene permisos para ver este libro.', 403);
       }
     }

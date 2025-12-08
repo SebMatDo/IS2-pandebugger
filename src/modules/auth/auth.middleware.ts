@@ -54,7 +54,9 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
 
 /**
  * Middleware to check if user has specific role
- * Usage: authenticate, requireRole(['Admin', 'Supervisor'])
+ * Usage: requireRole(['Admin', 'Supervisor'])
+ * Note: This middleware REQUIRES authenticate middleware to be called first
+ * Anonymous users (Lector role or userId=0) are ALWAYS rejected
  */
 export const requireRole = (allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -64,6 +66,13 @@ export const requireRole = (allowedRoles: string[]) => {
       throw new AppError('No autenticado', 401);
     }
 
+    // CRITICAL: Reject ALL anonymous users from protected operations
+    // Anonymous users can ONLY read books, nothing else
+    if (authReq.user.rolNombre === 'Lector' || authReq.user.userId === 0 || authReq.user.userId === null) {
+      throw new AppError('Los usuarios anónimos no tienen permisos para realizar esta acción', 403);
+    }
+
+    // Check if user's role is in the allowed list
     if (!allowedRoles.includes(authReq.user.rolNombre)) {
       throw new AppError('No tiene permisos para realizar esta acción', 403);
     }
@@ -73,20 +82,34 @@ export const requireRole = (allowedRoles: string[]) => {
 };
 
 /**
- * Optional authentication - doesn't fail if no token provided
- * Useful for endpoints that work differently for authenticated users
+ * Middleware to require authentication (minimum Lector role)
+ * All users must be authenticated, including anonymous users
+ * This allows Lector (anonymous) and any other authenticated role
  */
 export const optionalAuthenticate = (req: Request, res: Response, next: NextFunction): void => {
   try {
     const authHeader = req.headers.authorization;
 
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
-      const payload = authService.verifyToken(token);
-      (req as AuthRequest).user = payload;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new AppError('Se requiere autenticación. Inicie sesión como usuario registrado o como usuario anónimo', 401);
     }
+
+    const token = authHeader.substring(7);
+    
+    if (!token) {
+      throw new AppError('Token vacío. Se requiere autenticación', 401);
+    }
+
+    const payload = authService.verifyToken(token);
+    (req as AuthRequest).user = payload;
+    
+    // Allow all authenticated users (including Lector/anonymous)
+    next();
   } catch (error) {
-    // Silently fail - this is optional auth
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(new AppError('Token inválido o expirado', 401));
+    }
   }
-  next();
 };

@@ -11,7 +11,8 @@ INSERT INTO roles (nombre, descripcion) VALUES
     ('Bibliotecario', 'Gestiona libros, usuarios y reportes'),
     ('Digitalizador', 'Digitaliza libros físicos y sube archivos'),
     ('Revisor', 'Revisa calidad de digitalizaciones y metadatos'),
-    ('Restaurador', 'Especialista en restauración de libros físicos')
+    ('Restaurador', 'Especialista en restauración de libros físicos'),
+    ('Lector', 'Usuario anónimo con acceso de solo lectura a libros publicados')
 ON CONFLICT (nombre) DO NOTHING;
 
 -- ===========================================
