@@ -1,70 +1,61 @@
 # 🚀 Getting Started - Pandebugger Backend
 
-Guía completa paso a paso para configurar, ejecutar y probar el proyecto desde cero.
+Complete step-by-step guide to setup, run, and test the project from scratch.
 
 ---
 
-## 📋 **Tabla de Contenidos**
+## 📋 **Table of Contents**
 
-1. [Requisitos Previos](#requisitos-previos)
-2. [Instalación Inicial](#instalación-inicial)
-3. [Configuración de Base de Datos](#configuración-de-base-de-datos)
-4. [Acceso a pgAdmin](#acceso-a-pgadmin)
-5. [Verificación del Sistema](#verificación-del-sistema)
-6. [Testing con Postman](#testing-con-postman)
-7. [Solución de Problemas](#solución-de-problemas)
-
----
-
-## 📦 **Requisitos Previos**
-
-Antes de comenzar, asegúrate de tener instalado:
-
-- **Node.js** >= 18.0.0 ([Descargar](https://nodejs.org/))
-- **npm** >= 9.0.0 (viene con Node.js)
-- **Docker** y **Docker Compose** ([Descargar](https://www.docker.com/))
-- **Git** ([Descargar](https://git-scm.com/))
-- **Postman** (opcional, para testing) ([Descargar](https://www.postman.com/downloads/))
-
-### Verificar instalaciones:
-
-```bash
-node --version    # Debe ser >= 18
-npm --version     # Debe ser >= 9
-docker --version
-docker compose version
-```
+1. [Prerequisites](#prerequisites)
+2. [Initial Installation](#initial-installation)
+3. [Database Configuration](#database-configuration)
+4. [pgAdmin Access](#pgadmin-access)
+5. [System Verification](#system-verification)
+6. [Testing with Postman](#testing-with-postman)
+7. [Troubleshooting](#troubleshooting)
 
 ---
 
-## 🔧 **Instalación Inicial**
+## 📦 **Prerequisites**
 
-### **Paso 1: Clonar el repositorio**
+Before starting, make sure you have installed:
+
+- **Node.js** >= 18.0.0 ([Download](https://nodejs.org/))
+- **npm** >= 9.0.0 (comes with Node.js)
+- **Docker** and **Docker Compose** ([Download](https://www.docker.com/))
+- **Git** ([Download](https://git-scm.com/))
+- **Postman** (optional, for testing) ([Download](https://www.postman.com/downloads/))
+
+### Verify Installations:
+
+## 🔧 **Initial Installation**
+
+### **Step 1: Clone the Repository**
 
 ```bash
 git clone https://github.com/SebMatDo/IS2-pandebugger.git
 cd IS2-pandebugger
 ```
 
-### **Paso 2: Instalar dependencias**
+### **Step 2: Install Dependencies**
 
 ```bash
 npm install
 ```
 
-Esto instalará todas las dependencias necesarias del proyecto.
+This will install all necessary project dependencies.
 
-### **Paso 3: Configurar variables de entorno**
+### **Step 3: Configure Environment Variables**
 
-Copia el archivo de ejemplo y configúralo:
+Copy the example file and configure it:
 
 ```bash
 cp .env.local .env
 ```
 
-El archivo `.env` ya viene pre-configurado para desarrollo local. No necesitas modificarlo.
+The `.env` file comes pre-configured for local development. You don't need to modify it.
 
-**Contenido de `.env` (ya configurado):**
+**Contents of `.env` (already configured):**
 ```env
 NODE_ENV=development
 PORT=3000
@@ -87,28 +78,28 @@ LOG_LEVEL=debug
 
 ---
 
-## 🐳 **Configuración de Base de Datos**
+## 🐳 **Database Configuration**
 
-### **Paso 4: Iniciar los contenedores Docker**
+### **Step 4: Start Docker Containers**
 
-Este comando levantará:
-- Backend API (puerto 3000)
-- PostgreSQL (puerto 5432)
-- pgAdmin (puerto 5050)
+This command will start:
+- Backend API (port 3000)
+- PostgreSQL (port 5432)
+- pgAdmin (port 5050)
 
 ```bash
 docker compose up -d
 ```
 
-Espera unos segundos a que todos los servicios estén listos.
+Wait a few seconds for all services to be ready.
 
-### **Paso 5: Verificar que los contenedores estén corriendo**
+### **Step 5: Verify Containers are Running**
 
 ```bash
 docker compose ps
 ```
 
-Deberías ver algo como:
+You should see something like:
 
 ```
 NAME                   STATUS
@@ -117,15 +108,15 @@ pandebugger-postgres   Up (healthy)
 pandebugger-pgadmin    Up
 ```
 
-### **Paso 6: Verificar las migraciones**
+### **Step 6: Verify Migrations**
 
-Las migraciones se ejecutan automáticamente al iniciar el contenedor de PostgreSQL. Verifica que las tablas fueron creadas:
+Migrations run automatically when starting the PostgreSQL container. Verify that tables were created:
 
 ```bash
 docker exec -it pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev -c "\dt"
 ```
 
-**Salida esperada:**
+**Expected Output:**
 ```
               List of relations
  Schema |      Name       | Type  |      Owner       
@@ -141,35 +132,35 @@ docker exec -it pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev
  public | usuarios        | table | pandebugger_user
 ```
 
-### **Paso 7: Cargar datos de prueba (seeds)**
+### **Step 7: Load Test Data (Seeds)**
 
-Ejecuta estos comandos para cargar usuarios, libros y tareas de ejemplo:
+Execute these commands to load sample users, books, and tasks:
 
 ```bash
-# Cargar usuarios de prueba
+# Load test users
 docker exec -i pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev < src/shared/database/seeds/001_seed_test_users.sql
 
-# Cargar libros de ejemplo
+# Load sample books
 docker exec -i pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev < src/shared/database/seeds/002_seed_test_books.sql
 
-# Cargar tareas de ejemplo
+# Load sample tasks
 docker exec -i pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev < src/shared/database/seeds/003_seed_test_tasks.sql
 ```
 
-**Salida esperada:**
+**Expected Output:**
 ```
 INSERT 0 5
 INSERT 0 10
 INSERT 0 3
 ```
 
-### **Paso 8: Verificar los datos cargados**
+### **Step 8: Verify Loaded Data**
 
 ```bash
 docker exec -it pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev -c "SELECT COUNT(*) as total_usuarios FROM usuarios; SELECT COUNT(*) as total_libros FROM libros;"
 ```
 
-**Salida esperada:**
+**Expected Output:**
 ```
  total_usuarios 
 ----------------
@@ -182,76 +173,52 @@ docker exec -it pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev
 
 ---
 
-## 🎨 **Acceso a pgAdmin**
+## 🎨 **pgAdmin Access**
 
-pgAdmin es una interfaz gráfica para administrar PostgreSQL.
+pgAdmin is a graphical interface to manage PostgreSQL.
 
-### **Paso 9: Abrir pgAdmin**
+### **Step 9: Open pgAdmin**
 
-1. Abre tu navegador y ve a: **http://localhost:5050**
+1. Open your browser and go to: **http://localhost:5050**
 
-2. **Login en pgAdmin:**
+2. **pgAdmin Login:**
    - Email: `admin@pandebugger.com`
    - Password: `admin`
 
-### **Paso 10: Registrar el servidor PostgreSQL**
+### **Step 10: Register PostgreSQL Server**
 
-Una vez dentro de pgAdmin:
+Once inside pgAdmin:
 
-1. Click derecho en **"Servers"** (panel izquierdo)
-2. Selecciona **"Register" → "Server"**
+1. Right-click on **"Servers"** (left panel)
+2. Select **"Register" → "Server"**
 
-3. **Pestaña "General":**
+3. **"General" tab:**
    - Name: `Local Dev`
 
-4. **Pestaña "Connection":**
+4. **"Connection" tab:**
    - Host name/address: `postgres`
    - Port: `5432`
    - Maintenance database: `pandebugger_dev`
    - Username: `pandebugger_user`
    - Password: `pandebugger_local_pass_2024`
-   - ✅ Marca **"Save password"**
+   - ✅ Check **"Save password"**
 
-5. **Pestaña "SSL":**
+5. **"SSL" tab:**
    - SSL mode: `Disable`
 
-6. Click **"Save"**
+6. Click **"Save"****
 
-### **Paso 11: Explorar los datos**
+## ✅ **System Verification**
 
-Navega por la estructura:
+### **Step 11: Test the API**
 
-```
-Servers
-└── Local Dev
-    └── Databases
-        └── pandebugger_dev
-            └── Schemas
-                └── public
-                    └── Tables
-                        ├── usuarios      (5 registros)
-                        ├── libros        (10 registros)
-                        ├── roles         (5 registros)
-                        ├── categoria     (15 registros)
-                        └── ...
-```
-
-Para ver datos de una tabla:
-- Click derecho en la tabla → **"View/Edit Data"** → **"All Rows"**
-
----
-
-## ✅ **Verificación del Sistema**
-
-### **Paso 12: Probar el API**
-
-Verifica que el backend esté funcionando correctamente:
+Verify that the backend is working correctly:
 
 ```bash
-# Health check básico
+# Basic health check
 curl http://localhost:3000/api/v1/health
 
-# Respuesta esperada:
+# Expected response:
 # {
 #   "status": "healthy",
 #   "timestamp": "2025-11-23T17:00:00.000Z",
@@ -259,29 +226,29 @@ curl http://localhost:3000/api/v1/health
 # }
 ```
 
-### **Paso 13: Ver logs del backend**
+### **Step 12: View Backend Logs**
 
-Para ver los logs en tiempo real:
+To view logs in real-time:
 
 ```bash
 docker compose logs -f app
 ```
 
-Presiona `Ctrl+C` para salir.
+Press `Ctrl+C` to exit.
 
 ---
 
-## 🧪 **Testing con Postman**
+## 🧪 **Testing with Postman**
 
-### **Paso 14: Configurar Postman**
+### **Step 13: Configure Postman**
 
-Ver la guía completa: **[docs/API_TESTING.md](./API_TESTING.md)**
+See complete guide: **[docs/API_TESTING.md](./API_TESTING.md)**
 
-**Resumen rápido:**
+**Quick summary:**
 
-1. **Crear colección:** "Pandebugger API"
-2. **Configurar ambiente:** Base URL = `http://localhost:3000/api/v1`
-3. **Probar login:**
+1. **Create collection:** "Pandebugger API"
+2. **Configure environment:** Base URL = `http://localhost:3000/api/v1`
+3. **Test login:**
 
 ```http
 POST http://localhost:3000/api/v1/auth/login
@@ -293,18 +260,18 @@ Content-Type: application/json
 }
 ```
 
-4. **Usar el token** en endpoints protegidos:
+4. **Use the token** in protected endpoints:
 
 ```http
 GET http://localhost:3000/api/v1/auth/me
 Authorization: Bearer <tu_token_aqui>
 ```
 
-### **Usuarios de prueba disponibles:**
+### **Available Test Users:**
 
-Todos usan la contraseña: **`Test123!`**
+All use password: **`Test123!`**
 
-| Email | Rol |
+| Email | Role |
 |-------|-----|
 | admin@pandebugger.com | Admin |
 | maria.gonzalez@pandebugger.com | Bibliotecario |
@@ -314,56 +281,56 @@ Todos usan la contraseña: **`Test123!`**
 
 ---
 
-## 🔧 **Solución de Problemas**
+## 🔧 **Troubleshooting**
 
-### **Problema: Los contenedores no inician**
+### **Problem: Containers won't start**
 
 ```bash
-# Detener todo y limpiar
+# Stop everything and clean
 docker compose down -v
 
-# Volver a iniciar
+# Start again
 docker compose up -d
 ```
 
-### **Problema: "Port 5432 already in use"**
+### **Problem: "Port 5432 already in use"**
 
-Tienes otro PostgreSQL corriendo en tu máquina.
+You have another PostgreSQL running on your machine.
 
-**Solución 1:** Detén el PostgreSQL local:
+**Solution 1:** Stop local PostgreSQL:
 ```bash
 sudo systemctl stop postgresql  # Linux
 brew services stop postgresql   # macOS
 ```
 
-**Solución 2:** Cambia el puerto en `docker-compose.yml`:
+**Solution 2:** Change port in `docker-compose.yml`:
 ```yaml
 postgres:
   ports:
-    - "5433:5432"  # Cambiar a 5433
+    - "5433:5432"  # Change to 5433
 ```
 
-### **Problema: "Cannot connect to database" en pgAdmin**
+### **Problem: "Cannot connect to database" in pgAdmin**
 
-1. Asegúrate de usar `postgres` como host (no `localhost`)
-2. Verifica que el contenedor esté corriendo: `docker compose ps`
-3. Intenta reiniciar pgAdmin: `docker compose restart pgadmin`
+1. Make sure to use `postgres` as host (not `localhost`)
+2. Verify container is running: `docker compose ps`
+3. Try restarting pgAdmin: `docker compose restart pgadmin`
 
-### **Problema: Las migraciones no se ejecutaron**
+### **Problem: Migrations didn't execute**
 
 ```bash
-# Ejecutarlas manualmente
+# Run them manually
 docker exec -i pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev < src/shared/database/migrations/001_initial_schema.sql
 docker exec -i pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev < src/shared/database/migrations/002_seed_reference_data.sql
 ```
 
-### **Problema: "Token no proporcionado" en Postman**
+### **Problem: "Token no proporcionado" in Postman**
 
-1. Verifica que el header sea: `Authorization: Bearer <token>`
-2. Asegúrate de incluir la palabra `Bearer` antes del token
-3. Verifica que no haya espacios extra o comillas
+1. Verify the header is: `Authorization: Bearer <token>`
+2. Make sure to include the word `Bearer` before the token
+3. Verify there are no extra spaces or quotes
 
-### **Ver todos los logs:**
+### **View all logs:**
 
 ```bash
 # Backend
@@ -381,58 +348,44 @@ docker compose logs -f
 
 ---
 
-## 🎯 **Comandos Útiles**
+## 🎯 **Useful Commands**
 
 ```bash
-# Iniciar contenedores
+# Start containers
 docker compose up -d
 
-# Detener contenedores
+# Stop containers
 docker compose down
 
-# Detener y eliminar volúmenes (BORRA DATOS)
+# Stop and remove volumes (DELETES DATA)
 docker compose down -v
 
-# Ver estado de contenedores
+# View container status
 docker compose ps
 
-# Ver logs
+# View logs
 docker compose logs -f app
 
-# Reiniciar un servicio específico
+# Restart specific service
 docker compose restart app
 
-# Acceder a la shell de PostgreSQL
+# Access PostgreSQL shell
 docker exec -it pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev
 
-# Ejecutar seeds manualmente
+# Run seeds manually
 docker exec -i pandebugger-postgres psql -U pandebugger_user -d pandebugger_dev < src/shared/database/seeds/001_seed_test_users.sql
 
-# Recargar todo desde cero
+# Reload everything from scratch
 docker compose down -v && docker compose up -d
 ```
 
 ---
 
-## 📚 **Próximos Pasos**
+## 📚 **Next Steps**
 
-Una vez que todo esté funcionando:
+Once everything is working:
 
-1. ✅ **[API Testing Guide](./API_TESTING.md)** - Pruebas completas con Postman
-2. ✅ **[Database Guide](./DATABASE_GUIDE.md)** - Gestión de migraciones y seeds
-3. ✅ **[AWS Deployment](./AWS_DEPLOYMENT.md)** - Despliegue en producción
-4. ✅ **[Development Guide](./DEVELOPMENT.md)** - Agregar nuevos módulos
-
----
-
-## 🆘 **¿Necesitas ayuda?**
-
-- **Documentación adicional:** Ver carpeta `docs/`
-- **Issues del proyecto:** https://github.com/SebMatDo/IS2-pandebugger/issues
-- **Revisar logs:** `docker compose logs -f`
-
----
-
-**¡Felicidades! 🎉 Tu ambiente de desarrollo está listo.**
-
-Continúa con la [Guía de Testing de API](./API_TESTING.md) para aprender a probar todos los endpoints.
+1. ✅ **[API Testing Guide](./API_TESTING.md)** - Complete testing with Postman
+2. ✅ **[Database Guide](./DATABASE_GUIDE.md)** - Migration and seed management
+3. ✅ **[AWS Deployment](./AWS_DEPLOYMENT.md)** - Production deployment
+4. ✅ **[Development Guide](./DEVELOPMENT.md)** - Adding new modules

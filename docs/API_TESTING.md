@@ -1,102 +1,87 @@
 # 🧪 API Testing Guide - Postman
 
-Guía completa para probar la API de Pandebugger usando Postman.
+Complete guide to test the Pandebugger API using Postman.
 
 ---
 
-## 📋 **Tabla de Contenidos**
+## 📋 **Table of Contents**
 
-1. [Instalación de Postman](#instalación-de-postman)
-2. [Configuración Inicial](#configuración-inicial)
-3. [Testing de Autenticación](#testing-de-autenticación)
-4. [Testing de Endpoints Protegidos](#testing-de-endpoints-protegidos)
-5. [Colección Completa de Endpoints](#colección-completa-de-endpoints)
-6. [Automatización de Tests](#automatización-de-tests)
+1. [Installing Postman](#installing-postman)
+2. [Initial Setup](#initial-setup)
+3. [Authentication Testing](#authentication-testing)
+4. [Protected Endpoints Testing](#protected-endpoints-testing)
+5. [Complete Endpoint Collection](#complete-endpoint-collection)
+6. [Test Automation](#test-automation)
 7. [Troubleshooting](#troubleshooting)
+8. [Anonymous Login Testing](#anonymous-login-testing)
 
 ---
 
-## 📥 **Instalación de Postman**
+## 📥 **Installing Postman**
 
-### **Descargar e instalar**
+### **Download and Install**
 
-**Opción 1: Aplicación de escritorio (Recomendado)**
-- Descarga desde: https://www.postman.com/downloads/
-- Disponible para Windows, macOS y Linux
+**Desktop Application**
+- Download from: https://www.postman.com/downloads/
+- Available for Windows, macOS, and Linux
 
-**Opción 2: Linux (Snap)**
-```bash
-sudo snap install postman
-```
+## ⚙️ **Initial Setup**
 
-**Opción 3: Web (sin instalación)**
-- Ve a: https://web.postman.co/
+### **Step 1: Create Workspace**
 
-### **Crear cuenta (opcional)**
-
-Crear una cuenta te permite:
-- Sincronizar colecciones entre dispositivos
-- Compartir colecciones con tu equipo
-- Usar funciones avanzadas
-
----
-
-## ⚙️ **Configuración Inicial**
-
-### **Paso 1: Crear Workspace**
-
-1. Abre Postman
-2. Click en "Workspaces" (esquina superior izquierda)
+1. Open Postman
+2. Click on "Workspaces" (top left corner)
 3. Click "Create Workspace"
-4. Nombre: `Pandebugger Development`
-5. Visibility: `Personal` (o `Team` si trabajas en equipo)
+4. Name: `Pandebugger Development`
+5. Visibility: `Personal` (or `Team` if working with a team)
 6. Click "Create"
 
-### **Paso 2: Crear Colección**
+### **Step 2: Create Collection**
 
-1. En el panel izquierdo, click en "Collections"
-2. Click "+" o "Create Collection"
-3. Nombre: `Pandebugger API`
+1. In the left panel, click on "Collections"
+2. Click "+" or "Create Collection"
+3. Name: `Pandebugger API`
 4. Description: `API endpoints for Pandebugger book digitalization system`
 
-### **Paso 3: Configurar Ambiente (Environment)**
+### **Step 3: Configure Environment**
 
-Los ambientes te permiten cambiar fácilmente entre desarrollo, testing y producción.
+Environments allow you to easily switch between development, testing, and production.
 
-1. Click en el ícono de **⚙️ (Settings)** → "Environments"
-2. Click "+" para crear nuevo ambiente
-3. Nombre: `Local Development`
+1. Click on **⚙️ (Settings)** icon → "Environments"
+2. Click "+" to create new environment
+3. Name: `Local Development`
 
-4. **Agregar variables:**
+4. **Add variables:**
 
 | Variable | Initial Value | Current Value | Type |
 |----------|---------------|---------------|------|
 | `base_url` | `http://localhost:3000/api/v1` | `http://localhost:3000/api/v1` | default |
-| `auth_token` | (dejar vacío) | (dejar vacío) | secret |
+| `auth_token` | (leave empty) | (leave empty) | secret |
+| `anonymous_token` | (leave empty) | (leave empty) | secret |
 
 5. Click "Save"
-6. **Selecciona el ambiente** "Local Development" en el dropdown (esquina superior derecha)
+6. **Select the environment** "Local Development" from the dropdown (top right corner)
 
-### **Verificar configuración**
+### **Verify Configuration**
 
-Deberías ver en la esquina superior derecha:
+You should see in the top right corner:
 ```
 Environment: Local Development
 ```
 
 ---
 
-## 🔐 **Testing de Autenticación**
+## 🔐 **Authentication Testing**
 
-### **Paso 4: Request de Login**
+### **Step 4: Login Request**
 
-Este es el endpoint más importante, ya que obtienes el token JWT necesario para acceder a endpoints protegidos.
+This is the most important endpoint, as you get the JWT token needed to access protected endpoints.
 
-#### **Crear el request**
+#### **Create the Request**
 
-1. En tu colección "Pandebugger API", click **"Add request"**
-2. Nombre: `Auth - Login`
-3. Configura:
+1. In your "Pandebugger API" collection, click **"Add request"**
+2. Name: `Auth - Login`
+3. Configure:
 
 **Method:** `POST`
 
@@ -107,7 +92,7 @@ Este es el endpoint más importante, ya que obtienes el token JWT necesario para
 Content-Type: application/json
 ```
 
-**Body:** (selecciona "raw" y "JSON")
+**Body:** (select "raw" and "JSON")
 ```json
 {
   "email": "admin@pandebugger.com",
@@ -115,91 +100,31 @@ Content-Type: application/json
 }
 ```
 
-#### **Script para guardar token automáticamente**
+#### **Script to Automatically Save Token**
 
-En la pestaña **"Tests"** del request, pega este código:
+In the **"Tests"** tab of the request, paste this code:
 
 ```javascript
-// Guardar token si el login es exitoso
 if (pm.response.code === 200) {
     const response = pm.response.json();
-    
-    // Guardar token en variable de ambiente
     pm.environment.set("auth_token", response.data.token);
-    
-    // Logs para debugging
-    console.log("✅ Login exitoso");
-    console.log("Token guardado:", response.data.token.substring(0, 20) + "...");
-    console.log("Usuario:", response.data.user.email);
-    console.log("Rol:", response.data.user.rol_nombre);
-    
-    // Test de validación
-    pm.test("Status code is 200", function () {
-        pm.response.to.have.status(200);
-    });
-    
-    pm.test("Response has token", function () {
-        pm.expect(response.data.token).to.be.a('string');
-        pm.expect(response.data.token.length).to.be.above(50);
-    });
-    
-    pm.test("Response has user data", function () {
-        pm.expect(response.data.user).to.have.property('email');
-        pm.expect(response.data.user).to.have.property('rol_nombre');
-    });
-} else {
-    console.log("❌ Login fallido");
-    console.log("Status:", pm.response.code);
-    console.log("Response:", pm.response.json());
+    console.log("Token saved:", response.data.token);
 }
 ```
 
-#### **Ejecutar el request**
+## 🔒 **Protected Endpoints Testing**
 
-1. Click en **"Send"**
-2. Verifica la respuesta
+Protected endpoints require the JWT token in the `Authorization` header.
 
-**Respuesta esperada (200 OK):**
-```json
-{
-  "success": true,
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoiYWRtaW5AcGFuZGVidWdnZXIuY29tIiwicm9sSWQiOjEsInJvbE5vbWJyZSI6IkFkbWluIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjE3MDA2MDQ4MDB9.abc123def456...",
-    "user": {
-      "id": 6,
-      "nombres": "Admin",
-      "apellidos": "Sistema",
-      "correo_electronico": "admin@pandebugger.com",
-      "rol_id": 1,
-      "rol_nombre": "Admin",
-      "estado": true
-    }
-  },
-  "message": "Login exitoso"
-}
-```
+### **Step 5: Get Current User (GET /auth/me)**
 
-#### **Verificar que el token se guardó**
+This endpoint returns the authenticated user's information.
 
-1. Click en el ícono **👁️ (eye)** en la esquina superior derecha
-2. Busca la variable `auth_token`
-3. Deberías ver el token JWT guardado
+#### **Create the Request**
 
----
-
-## 🔒 **Testing de Endpoints Protegidos**
-
-Los endpoints protegidos requieren el token JWT en el header `Authorization`.
-
-### **Paso 5: Get Current User (GET /auth/me)**
-
-Este endpoint retorna la información del usuario autenticado.
-
-#### **Crear el request**
-
-1. En tu colección, click **"Add request"**
-2. Nombre: `Auth - Get Me`
-3. Configura:
+1. In your collection, click **"Add request"**
+2. Name: `Auth - Get Me`
+3. Configure:
 
 **Method:** `GET`
 
@@ -211,56 +136,11 @@ Authorization: Bearer {{auth_token}}
 Content-Type: application/json
 ```
 
-> **Nota:** Postman reemplazará automáticamente `{{auth_token}}` con el valor guardado.
+> **Note:** Postman will automatically replace `{{auth_token}}` with the saved value.
 
-**Tests:**
-```javascript
-if (pm.response.code === 200) {
-    const response = pm.response.json();
-    
-    console.log("✅ Usuario obtenido");
-    console.log("Nombre:", response.data.nombres, response.data.apellidos);
-    console.log("Email:", response.data.correo_electronico);
-    console.log("Rol:", response.data.rol_nombre);
-    
-    pm.test("Status code is 200", function () {
-        pm.response.to.have.status(200);
-    });
-    
-    pm.test("User data is complete", function () {
-        pm.expect(response.data).to.have.property('id');
-        pm.expect(response.data).to.have.property('correo_electronico');
-        pm.expect(response.data).to.have.property('rol_nombre');
-    });
-} else if (pm.response.code === 401) {
-    console.log("❌ No autenticado - Ejecuta el request de Login primero");
-} else {
-    console.log("❌ Error:", pm.response.code);
-}
-```
+### **Step 6: Change Password (POST /auth/change-password)**
 
-**Respuesta esperada (200 OK):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 6,
-    "nombres": "Admin",
-    "apellidos": "Sistema",
-    "correo_electronico": "admin@pandebugger.com",
-    "rol_id": 1,
-    "rol_nombre": "Admin",
-    "rol_descripcion": "Administrador del sistema con acceso completo",
-    "estado": true,
-    "created_at": "2025-11-23T17:00:00.000Z",
-    "updated_at": "2025-11-23T17:00:00.000Z"
-  }
-}
-```
-
-### **Paso 6: Change Password (POST /auth/change-password)**
-
-Permite cambiar la contraseña del usuario autenticado.
+Allows changing the authenticated user's password.
 
 **Method:** `POST`
 
@@ -280,276 +160,515 @@ Content-Type: application/json
 }
 ```
 
-> ⚠️ **Nota:** Si cambias la contraseña, necesitarás hacer login nuevamente con la nueva contraseña.
+> ⚠️ **Note:** If you change the password, you'll need to login again with the new password.
 
 ---
 
-## 📚 **Colección Completa de Endpoints**
+## 📚 **Complete Endpoint Collection**
 
 ### **Authentication Module**
 
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
-| `/auth/login` | POST | ❌ No | Login y obtener token JWT |
-| `/auth/me` | GET | ✅ Sí | Obtener información del usuario actual |
-| `/auth/change-password` | POST | ✅ Sí | Cambiar contraseña |
-| `/auth/restore-password` | POST | ❌ No | Restaurar contraseña (TODO) |
+| `/auth/login` | POST | ❌ No | Login and get JWT token |
+| `/auth/login-anonymous` | POST | ❌ No | Anonymous login (Lector role) |
+| `/auth/me` | GET | ✅ Yes | Get current user information |
+| `/auth/change-password` | POST | ✅ Yes | Change password |
+| `/auth/restore-password` | POST | ❌ No | Restore password (TODO) |
 
 ### **Health Check**
 
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
-| `/health` | GET | ❌ No | Health check básico |
+| `/health` | GET | ❌ No | Basic health check |
 | `/health/readiness` | GET | ❌ No | Readiness probe (DB check) |
 
-### **Books Module** (si está implementado)
+### **Books Module**
 
-| Endpoint | Method | Auth | Description |
-|----------|--------|------|-------------|
-| `/books` | GET | ✅ Sí | Listar libros |
-| `/books/:id` | GET | ✅ Sí | Obtener libro por ID |
-| `/books` | POST | ✅ Sí | Crear nuevo libro |
-| `/books/:id` | PUT | ✅ Sí | Actualizar libro |
-| `/books/:id` | DELETE | ✅ Sí | Eliminar libro |
+| Endpoint | Method | Auth | Roles | Description |
+|----------|--------|------|-------|-------------|
+| `/books` | GET | ✅ Yes | All (including Lector) | List books |
+| `/books/:id` | GET | ✅ Yes | All (including Lector) | Get book by ID |
+| `/books/states` | GET | ❌ No | Public | Get all book states |
+| `/books/categories` | GET | ❌ No | Public | Get all categories |
+| `/books` | POST | ✅ Yes | Admin, Bibliotecario | Create new book |
+| `/books/:id` | PUT | ✅ Yes | Admin, Bibliotecario | Update book |
+| `/books/:id` | DELETE | ✅ Yes | Admin, Bibliotecario | Deactivate book |
+| `/books/categories` | POST | ✅ Yes | Admin, Bibliotecario | Create category |
+| `/books/categories/:id` | PUT | ✅ Yes | Admin, Bibliotecario | Update category |
+
+### **Users Module**
+
+| Endpoint | Method | Auth | Roles | Description |
+|----------|--------|------|-------|-------------|
+| `/users` | GET | ✅ Yes | Admin, Bibliotecario | List users |
+| `/users/:id` | GET | ✅ Yes | Admin, Bibliotecario | Get user by ID |
+| `/users/roles` | GET | ✅ Yes | Admin, Bibliotecario | Get all roles |
+| `/users` | POST | ✅ Yes | Admin, Bibliotecario | Create user |
+| `/users/:id` | PUT | ✅ Yes | Admin, Bibliotecario | Update user |
+| `/users/:id` | DELETE | ✅ Yes | Admin, Bibliotecario | Deactivate user |
+| `/users/:id/activate` | PATCH | ✅ Yes | Admin, Bibliotecario | Activate user |
+
+### **Tasks Module**
+
+| Endpoint | Method | Auth | Roles | Description |
+|----------|--------|------|-------|-------------|
+| `/tasks` | GET | ✅ Yes | Admin, Bibliotecario | List tasks |
+| `/tasks/:id` | GET | ✅ Yes | Admin, Bibliotecario | Get task by ID |
+| `/tasks` | POST | ✅ Yes | Admin, Bibliotecario | Create task |
+| `/tasks/:id` | PUT | ✅ Yes | Admin, Bibliotecario | Update task |
+
+### **History Module**
+
+| Endpoint | Method | Auth | Roles | Description |
+|----------|--------|------|-------|-------------|
+| `/history` | GET | ✅ Yes | Admin, Bibliotecario | Get history with filters |
+| `/history/:id` | GET | ✅ Yes | Admin, Bibliotecario | Get history by ID |
+| `/history/recent` | GET | ✅ Yes | Admin, Bibliotecario | Get recent activity |
+| `/history/user/:id` | GET | ✅ Yes | Admin, Bibliotecario | Get user activity |
+| `/history/target/:type/:id` | GET | ✅ Yes | Admin, Bibliotecario | Get target history |
+| `/history/acciones` | GET | ✅ Yes | Admin, Bibliotecario | Get all actions |
+| `/history/target-types` | GET | ✅ Yes | Admin, Bibliotecario | Get all target types |
 
 ---
 
-## 🔄 **Flujo de Testing Recomendado**
+## 🔄 **Recommended Testing Flow**
 
-### **Orden de ejecución**
+### **Execution Order**
 
-1. **Health Check** → Verificar que el servidor está corriendo
-2. **Login** → Obtener token JWT
-3. **Get Me** → Verificar autenticación
-4. **Otros endpoints protegidos** → Probar funcionalidad específica
+1. **Health Check** → Verify server is running
+2. **Login** → Get JWT token
+3. **Get Me** → Verify authentication
+4. **Other protected endpoints** → Test specific functionality
 
-### **Ejemplo de sesión completa**
+### **Complete Session Example**
 
 ```
-1. GET  /health                    → 200 OK (servidor funcionando)
-2. POST /auth/login                → 200 OK (token guardado automáticamente)
-3. GET  /auth/me                   → 200 OK (autenticación exitosa)
-4. GET  /books                     → 200 OK (lista de libros)
-5. POST /books                     → 201 Created (libro creado)
-6. GET  /books/11                  → 200 OK (libro recién creado)
-7. PUT  /books/11                  → 200 OK (libro actualizado)
-8. POST /auth/change-password      → 200 OK (contraseña cambiada)
+1. GET  /health                    → 200 OK (server working)
+2. POST /auth/login                → 200 OK (token saved automatically)
+3. GET  /auth/me                   → 200 OK (authentication successful)
+4. GET  /books                     → 200 OK (book list)
+5. POST /books                     → 201 Created (book created)
+6. GET  /books/11                  → 200 OK (newly created book)
+7. PUT  /books/11                  → 200 OK (book updated)
+8. GET  /history/recent            → 200 OK (recent activity with target names)
+9. POST /auth/change-password      → 200 OK (password changed)
 ```
 
 ---
 
-## 🤖 **Automatización de Tests**
+## 🤖 **Test Automation**
 
-### **Crear Test Suite**
+### **Create Test Suite**
 
-Postman permite ejecutar todas las requests en secuencia automáticamente.
+Postman allows you to run all requests in sequence automatically.
 
 #### **Collection Runner**
 
-1. Click derecho en tu colección "Pandebugger API"
-2. Selecciona "Run collection"
-3. Selecciona el ambiente "Local Development"
+1. Right-click on your "Pandebugger API" collection
+2. Select "Run collection"
+3. Select the "Local Development" environment
 4. Click "Run Pandebugger API"
 
-Postman ejecutará todos los requests en orden y mostrará los resultados.
+Postman will execute all requests in order and show the results.
 
-#### **Scripts Pre-request**
+#### **Pre-request Scripts**
 
-Para ejecutar código antes de cada request:
+To run code before each request:
 
 ```javascript
-// Pre-request Script (nivel de colección)
-console.log("🚀 Ejecutando:", pm.info.requestName);
+// Pre-request Script (collection level)
+console.log("🚀 Executing:", pm.info.requestName);
 console.log("📍 URL:", pm.request.url);
 console.log("🕐 Timestamp:", new Date().toISOString());
 ```
 
-#### **Tests globales**
+## 🧑‍🤝‍🧑 **Testing with Different Users**
 
-En el nivel de colección, puedes agregar tests que se ejecuten en todos los requests:
+### **Available Test Users**
+
+All use password: **`Test123!`**
+
+| Email | Role | Permissions |
+|-------|------|-------------|
+| admin@pandebugger.com | Admin | All permissions |
+| maria.gonzalez@pandebugger.com | Bibliotecario | Book and user management |
+| carlos.ramirez@pandebugger.com | Digitalizador | Digitize and upload files |
+| ana.martinez@pandebugger.com | Revisor | Quality review |
+| luis.fernandez@pandebugger.com | Restaurador | Physical restoration |
+
+### **Testing Permissions by Role**
+
+1. **Duplicate the Login request** (right-click → Duplicate)
+2. Rename: "Auth - Login (Bibliotecario)"
+3. Change email to `maria.gonzalez@pandebugger.com`
+4. Execute and verify you get a different token
+5. Use that token to test role-specific endpoints
+
+---
+
+## 🎭 **Anonymous Login Testing**
+
+### **Request: Anonymous Login**
+
+#### **Basic Configuration:**
+
+- **Method:** `POST`
+- **URL:** `{{base_url}}/auth/login-anonymous`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  ```
+
+### **Body (JSON):**
+
+```json
+{}
+```
+
+**Note:** The body is empty `{}` because anonymous login doesn't require credentials.
+
+---
+
+## ✅ **Expected Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": null,
+      "nombre": "Usuario",
+      "apellido": "Anónimo",
+      "email": "anonimo@pandebugger.com",
+      "rol_id": 6,
+      "rol_nombre": "Lector"
+    }
+  },
+  "message": "Login anónimo exitoso"
+}
+```
+
+---
+
+## 🔧 **Test Scripts in Postman**
+
+In the **Tests** tab of your request, add this code to automatically save the anonymous token:
 
 ```javascript
-// Tests (nivel de colección)
-pm.test("Response time is acceptable", function () {
-    pm.expect(pm.response.responseTime).to.be.below(500);
-});
-
-pm.test("Response has correct content-type", function () {
-    pm.expect(pm.response.headers.get("Content-Type")).to.include("application/json");
-});
+if (pm.response.code === 200) {
+    const response = pm.response.json();
+    
+    // Save anonymous token
+    pm.environment.set("anonymous_token", response.data.token);
+    
+    // Automatic tests
+    pm.test("Status code is 200", function () {
+        pm.response.to.have.status(200);
+    });
+    
+    pm.test("Response has success true", function () {
+        pm.expect(response.success).to.be.true;
+    });
+    
+    pm.test("Token is present", function () {
+        pm.expect(response.data.token).to.be.a('string');
+        pm.expect(response.data.token.length).to.be.greaterThan(0);
+    });
+    
+    pm.test("User is anonymous (Lector role)", function () {
+        pm.expect(response.data.user.rol_nombre).to.eql("Lector");
+        pm.expect(response.data.user.email).to.eql("anonimo@pandebugger.com");
+        pm.expect(response.data.user.id).to.be.null;
+    });
+    
+    console.log("✅ Anonymous token saved:", response.data.token);
+}
 ```
 
 ---
 
-## 🧑‍🤝‍🧑 **Testing con Diferentes Usuarios**
+## 🔒 **Testing Access with Anonymous Token**
 
-### **Usuarios de prueba disponibles**
+Once you have the anonymous token, test these endpoints:
 
-Todos usan la contraseña: **`Test123!`**
+### **1. View Published Books (✅ Allowed)**
 
-| Email | Rol | Permisos |
-|-------|-----|----------|
-| admin@pandebugger.com | Admin | Todos los permisos |
-| maria.gonzalez@pandebugger.com | Bibliotecario | Gestión de libros y usuarios |
-| carlos.ramirez@pandebugger.com | Digitalizador | Digitalizar y subir archivos |
-| ana.martinez@pandebugger.com | Revisor | Revisar calidad |
-| luis.fernandez@pandebugger.com | Restaurador | Restauración física |
+**GET** `{{base_url}}/books`
 
-### **Probar permisos por rol**
+**Headers:**
+```
+Authorization: Bearer {{anonymous_token}}
+```
 
-1. **Duplica el request de Login** (click derecho → Duplicate)
-2. Renombra: "Auth - Login (Bibliotecario)"
-3. Cambia el email a `maria.gonzalez@pandebugger.com`
-4. Ejecuta y verifica que obtienes un token diferente
-5. Usa ese token para probar endpoints específicos del rol
+**Expected Response:** List of digitized books (state "Disponible")
 
 ---
 
-## 🐛 **Troubleshooting**
+### **2. View Anonymous User Info (✅ Allowed)**
 
-### **Error: "Token no proporcionado"**
+**GET** `{{base_url}}/auth/me`
 
-**Causa:** El header `Authorization` no está configurado correctamente.
-
-**Solución:**
-1. Verifica que el header sea: `Authorization: Bearer {{auth_token}}`
-2. Asegúrate de incluir la palabra `Bearer` con espacio
-3. Verifica que la variable `{{auth_token}}` tenga valor (ícono 👁️)
-
-### **Error: "Token inválido"**
-
-**Causa:** El token expiró o es incorrecto.
-
-**Solución:**
-1. Ejecuta nuevamente el request de Login
-2. El token tiene una validez de 7 días por defecto
-
-### **Error: "ECONNREFUSED"**
-
-**Causa:** El servidor no está corriendo.
-
-**Solución:**
-```bash
-# Verificar que los contenedores estén activos
-docker compose ps
-
-# Si no están corriendo, iniciarlos
-docker compose up -d
-
-# Ver logs
-docker compose logs -f app
+**Headers:**
+```
+Authorization: Bearer {{anonymous_token}}
 ```
 
-### **Variables no se reemplazan**
-
-**Causa:** El ambiente no está seleccionado.
-
-**Solución:**
-1. Verifica que "Local Development" esté seleccionado (esquina superior derecha)
-2. Las variables deben estar en formato `{{variable_name}}`
-
-### **Tests fallan**
-
-**Causa:** La respuesta no es la esperada.
-
-**Solución:**
-1. Revisa la pestaña "Console" (abajo) para ver logs detallados
-2. Verifica el código de estado HTTP
-3. Revisa el body de la respuesta
+**Expected Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": null,
+    "nombre": "Usuario",
+    "apellido": "Anónimo",
+    "email": "anonimo@pandebugger.com",
+    "rol_id": 6,
+    "rol_nombre": "Lector",
+    "activo": true
+  }
+}
+```
 
 ---
 
-## 📤 **Exportar e Importar Colección**
+### **3. Try to Create a Book (❌ Forbidden)**
 
-### **Exportar colección**
+**POST** `{{base_url}}/books`
 
-Para compartir con tu equipo:
-
-1. Click derecho en "Pandebugger API"
-2. Selecciona "Export"
-3. Formato: "Collection v2.1"
-4. Click "Export"
-5. Guarda como: `Pandebugger_API.postman_collection.json`
-
-### **Importar colección**
-
-1. Click en "Import" (esquina superior izquierda)
-2. Selecciona el archivo `.json`
-3. Click "Import"
-
-### **Exportar ambiente**
-
-1. Click en ⚙️ → "Environments"
-2. Click en los tres puntos junto a "Local Development"
-3. "Export"
-4. Guarda como: `Local_Development.postman_environment.json`
-
----
-
-## 📊 **Monitoreo y Reportes**
-
-### **Ver historial de requests**
-
-1. Click en "History" (panel izquierdo)
-2. Verás todos los requests ejecutados
-3. Click en cualquiera para ver detalles
-
-### **Generar documentación**
-
-Postman puede generar documentación automática:
-
-1. En tu colección, click en "..." → "View documentation"
-2. Click "Publish" para generar URL pública
-3. Comparte la URL con tu equipo
-
----
-
-## 🎯 **Ejemplo Completo: Testing de Flujo**
-
-### **Escenario: Crear un libro nuevo**
-
-1. **Login como Admin:**
+**Headers:**
 ```
-POST {{base_url}}/auth/login
-Body: { "email": "admin@pandebugger.com", "password": "Test123!" }
+Authorization: Bearer {{anonymous_token}}
+Content-Type: application/json
 ```
 
-2. **Verificar autenticación:**
-```
-GET {{base_url}}/auth/me
-Headers: Authorization: Bearer {{auth_token}}
-```
-
-3. **Crear libro:**
-```
-POST {{base_url}}/books
-Headers: Authorization: Bearer {{auth_token}}
-Body: {
-  "titulo": "Nuevo Libro de Prueba",
-  "autor": "Autor Test",
+**Body:**
+```json
+{
+  "titulo": "Attempt to create book",
   "isbn": "978-1234567890",
   "categoria_id": 1,
   "estado_id": 1
 }
 ```
 
-4. **Verificar libro creado:**
+**Expected Response (403 Forbidden):**
+```json
+{
+  "success": false,
+  "message": "Anonymous users cannot perform this action"
+}
+```
+
+---
+
+### **4. Try to Modify a Book (❌ Forbidden)**
+
+**PUT** `{{base_url}}/books/1`
+
+**Headers:**
+```
+Authorization: Bearer {{anonymous_token}}
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "titulo": "Modified title"
+}
+```
+
+**Expected Response (403 Forbidden):**
+```json
+{
+  "success": false,
+  "message": "Anonymous users cannot perform this action"
+}
+```
+
+---
+
+## 📋 **Complete Collection in Postman**
+
+Create a folder named **"Auth - Anonymous"** with these requests:
+
+```
+📁 Pandebugger API
+  📁 Auth
+    📄 Login (registered user)
+    📄 Login Anonymous ← NEW
+    📄 Get Me
+    📄 Change Password
+  📁 Books
+    📄 Get All Books (allows anonymous)
+    📄 Get Book by ID (allows anonymous)
+    📄 Create Book (rejects anonymous)
+    📄 Update Book (rejects anonymous)
+    📄 Delete Book (rejects anonymous)
+```
+
+---
+
+## 🎯 **Complete Test Flow**
+
+```bash
+1. POST /auth/login-anonymous
+   ✅ Get anonymous token
+   ✅ Token saved in {{anonymous_token}}
+
+2. GET /books
+   ✅ With anonymous token → See only published books
+
+3. GET /auth/me
+   ✅ With anonymous token → Anonymous user info
+
+4. POST /books
+   ❌ With anonymous token → 403 Error
+
+5. PUT /books/1
+   ❌ With anonymous token → 403 Error
+
+6. DELETE /books/1
+   ❌ With anonymous token → 403 Error
+```
+
+---
+
+## 🔄 **Comparison: Regular User vs Anonymous**
+
+| Action | Regular User | Anonymous User |
+|--------|-------------|----------------|
+| **View published books** | ✅ Yes | ✅ Yes |
+| **Create book** | ✅ Yes (with permissions) | ❌ No |
+| **Modify book** | ✅ Yes (with permissions) | ❌ No |
+| **Delete book** | ✅ Yes (with permissions) | ❌ No |
+| **View history** | ✅ Yes | ❌ No |
+| **Manage users** | ✅ Yes (Admin) | ❌ No |
+| **Assign tasks** | ✅ Yes (with permissions) | ❌ No |
+
+---
+
+## 💡 **Testing Tips**
+
+1. **Save both tokens:**
+   - `{{auth_token}}` - Regular user
+   - `{{anonymous_token}}` - Anonymous user
+
+2. **Switch between tokens:**
+   - Change the `Authorization` header to test authenticated or anonymous access
+
+3. **Verify expiration:**
+   - Anonymous token also expires in 7 days
+   - Login again if you receive "Token expired"
+
+---
+
+## 🐛 **Troubleshooting**
+
+### **Error: "Token not provided"**
+
+**Cause:** The `Authorization` header is not configured correctly.
+
+**Solution:**
+1. Verify the header is: `Authorization: Bearer {{auth_token}}`
+2. Make sure to include the word `Bearer` with a space
+3. Verify the variable `{{auth_token}}` has a value (👁️ icon)
+
+### **Error: "Invalid token"**
+
+**Cause:** The token expired or is incorrect.
+
+**Solution:**
+1. Run the Login request again
+2. Tokens are valid for 7 days by default
+
+### **Error: "ECONNREFUSED"**
+
+**Cause:** The server is not running.
+
+**Solution:**
+```bash
+# Verify containers are active
+docker compose ps
+
+# If not running, start them
+docker compose up -d
+
+# View logs
+docker compose logs -f app
+```
+
+### **Variables Not Replaced**
+
+**Cause:** Environment is not selected.
+
+**Solution:**
+1. Verify "Local Development" is selected (top right corner)
+2. Variables must be in format `{{variable_name}}`
+
+### **Tests Fail**
+
+**Cause:** Response is not as expected.
+
+**Solution:**
+1. Check the "Console" tab (bottom) to see detailed logs
+2. Verify HTTP status code
+3. Review response body
+
+---
+
+## 🎯 **Complete Example: Testing Flow**
+
+### **Scenario: Create a New Book**
+
+1. **Login as Admin:**
+```
+POST {{base_url}}/auth/login
+Body: { "email": "admin@pandebugger.com", "password": "Test123!" }
+```
+
+2. **Verify authentication:**
+```
+GET {{base_url}}/auth/me
+Headers: Authorization: Bearer {{auth_token}}
+```
+
+3. **Create book:**
+```
+POST {{base_url}}/books
+Headers: Authorization: Bearer {{auth_token}}
+Body: {
+  "titulo": "New Test Book",
+  "autor": "Test Author",
+  "isbn": "978-1234567890",
+  "categoria_id": 1,
+  "estado_id": 1
+}
+```
+
+4. **Verify created book:**
 ```
 GET {{base_url}}/books/11
 Headers: Authorization: Bearer {{auth_token}}
 ```
 
+5. **Check history log:**
+```
+GET {{base_url}}/history/recent
+Headers: Authorization: Bearer {{auth_token}}
+```
+
+**Expected:** Should show the book creation with `target_nombre` = "New Test Book"
+
 ---
 
-## 📚 **Recursos Adicionales**
+## 📚 **Additional Resources**
 
-- **[Getting Started](./GETTING_STARTED.md)** - Configuración inicial del proyecto
-- **[Database Guide](./DATABASE_GUIDE.md)** - Gestión de base de datos
-- **[Postman Documentation](https://learning.postman.com/docs/)** - Documentación oficial
-- **[JWT.io](https://jwt.io/)** - Decodificar tokens JWT
+- **[Getting Started](./GETTING_STARTED.md)** - Initial project setup
+- **[Database Guide](./DATABASE_GUIDE.md)** - Database management
+- **[Postman Documentation](https://learning.postman.com/docs/)** - Official documentation
+- **[JWT.io](https://jwt.io/)** - Decode JWT tokens
 
 ---
-
-¡Ahora estás listo para probar toda la API! 🚀
-
-Si encuentras algún problema, revisa la sección de Troubleshooting o consulta los logs del servidor con `docker compose logs -f app`.

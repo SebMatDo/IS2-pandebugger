@@ -1,150 +1,144 @@
 # 🧪 Testing Guide - IS2 Pandebugger
 
-## Configuración de Pruebas
+## Test Configuration
 
-Este proyecto utiliza **Jest** como framework de testing con soporte completo para TypeScript mediante `ts-jest`.
+This project uses **Jest** as testing framework with full TypeScript support via `ts-jest`.
 
-## Estructura de Pruebas
+## Test Structure
 
 ```
 src/
 ├── __tests__/
-│   └── setup.ts                    # Configuración global de Jest
+│   └── setup.ts                    # Global Jest configuration
 └── modules/
     └── auth/
         └── __tests__/
-            ├── auth.service.test.ts      # Tests unitarios del servicio
-            └── auth.controller.test.ts   # Tests de integración del controlador
+            ├── auth.service.test.ts      # Service unit tests
+            └── auth.controller.test.ts   # Controller integration tests
 ```
 
-## Comandos Disponibles
+## Available Commands
 
-### Ejecutar todas las pruebas
+### Run all tests
 ```bash
 npm test
 ```
 
-### Ejecutar pruebas en modo watch (desarrollo)
+### Run tests in watch mode (development)
 ```bash
 npm run test:watch
 ```
 
-### Ejecutar pruebas con cobertura
+### Run tests with coverage
 ```bash
 npm run test:coverage
 ```
 
-### Ejecutar pruebas con salida detallada
+### Run tests with detailed output
 ```bash
 npm run test:verbose
 ```
 
-### Ejecutar solo pruebas de autenticación
+### Run only authentication tests
 ```bash
 npm run test:auth
 ```
 
-### Ejecutar solo pruebas de usuarios
+### Run only user tests
 ```bash
 npm run test:users
 ```
 
-## Casos de Prueba Implementados
+## Implemented Test Cases
 
 ### 🔐 AuthService (auth.service.test.ts)
 
-#### Gestión de Contraseñas
-- ✅ `hashPassword()` - Hash de contraseñas con bcrypt
-- ✅ `verifyPassword()` - Verificación de contraseñas
-- ✅ `validatePasswordStrength()` - Validación de fortaleza (8+ chars, mayúscula, número, símbolo)
+#### Password Management
+- ✅ `hashPassword()` - Password hashing with bcrypt
+- ✅ `verifyPassword()` - Password verification
+- ✅ `validatePasswordStrength()` - Strength validation (8+ chars, uppercase, number, symbol)
 
-#### Gestión de Tokens JWT
-- ✅ `generateToken()` - Generación de tokens JWT
-- ✅ `verifyToken()` - Verificación y decodificación de tokens
-- ✅ Manejo de tokens inválidos y expirados
+#### JWT Token Management
+- ✅ `generateToken()` - JWT token generation
+- ✅ `verifyToken()` - Token verification and decoding
+- ✅ Handling invalid and expired tokens
 
 #### CU06 - Login
-- ✅ Login exitoso con credenciales válidas
-- ✅ Error cuando usuario no existe
-- ✅ Error cuando usuario está inactivo
-- ✅ Error cuando contraseña es incorrecta
-- ✅ Generación de respuesta con datos de usuario y token
+- ✅ Successful login with valid credentials
+- ✅ Error when user doesn't exist
+- ✅ Error when user is inactive
+- ✅ Error when password is incorrect
+- ✅ Response generation with user data and token
 
-#### CU20 - Cambio de Contraseña
-- ✅ Cambio exitoso de contraseña
-- ✅ Error cuando usuario no existe
-- ✅ Error cuando contraseña actual es incorrecta
-- ✅ Error cuando nueva contraseña es débil
-- ✅ Validación de fortaleza (mayúscula, número, símbolo)
+#### CU20 - Password Change
+- ✅ Successful password change
+- ✅ Error when user doesn't exist
+- ✅ Error when current password is incorrect
+- ✅ Error when new password is weak
+- ✅ Strength validation (uppercase, number, symbol)
 
 ### 👥 UsersService (users.service.test.ts)
 
-#### CU09 - Crear Usuario
-- ✅ Crear usuario exitosamente
-- ✅ Error cuando email ya existe
-- ✅ Error cuando contraseña es débil
+#### CU09 - Create User
+- ✅ Create user successfully
+- ✅ Error when email already exists
+- ✅ Error when password is weak
 
-#### CU18 - Buscar Usuarios
-- ✅ Obtener todos los usuarios
-- ✅ Filtrar usuarios por estado
+#### CU18 - Search Users
+- ✅ Get all users
+- ✅ Filter users by status
 
-#### CU10 - Editar Usuario
-- ✅ Actualizar usuario exitosamente
-- ✅ Error cuando usuario no existe
-- ✅ Error cuando email ya existe
+#### CU10 - Edit User
+- ✅ Update user successfully
+- ✅ Error when user doesn't exist
+- ✅ Error when email already exists
 
-#### CU11 - Desactivar Usuario
-- ✅ Desactivar usuario exitosamente
-- ✅ Error cuando usuario no existe
-- ✅ Error cuando intentas desactivarte a ti mismo
-- ✅ Error cuando usuario ya está inactivo
+#### CU11 - Deactivate User
+- ✅ Deactivate user successfully
+- ✅ Error when user doesn't exist
+- ✅ Error when trying to deactivate yourself
+- ✅ Error when user is already inactive
 
-#### Funcionalidades Adicionales
-- ✅ Obtener usuario por ID
-- ✅ Activar usuario
-- ✅ Obtener todos los roles
+#### Additional Features
+- ✅ Get user by ID
+- ✅ Activate user
+- ✅ Get all roles
 
 ### 🎮 UsersController (users.controller.test.ts)
 
-#### Endpoints de API
-- ✅ `POST /api/v1/users` - Crear usuario (CU09)
-- ✅ `GET /api/v1/users` - Listar usuarios (CU18)
-- ✅ `GET /api/v1/users/:id` - Obtener usuario por ID
-- ✅ `PUT /api/v1/users/:id` - Actualizar usuario (CU10)
-- ✅ `DELETE /api/v1/users/:id` - Desactivar usuario (CU11)
-- ✅ `PATCH /api/v1/users/:id/activate` - Activar usuario
-- ✅ `GET /api/v1/users/roles` - Obtener roles
-- ✅ Validación de ID inválido
-- ✅ Filtros por estado y rol
+#### API Endpoints
+- ✅ `POST /api/v1/users` - Create user (CU09)
+- ✅ `GET /api/v1/users` - List users (CU18)
+- ✅ `GET /api/v1/users/:id` - Get user by ID
+- ✅ `PUT /api/v1/users/:id` - Update user (CU10)
+- ✅ `DELETE /api/v1/users/:id` - Deactivate user (CU11)
+- ✅ `PATCH /api/v1/users/:id/activate` - Activate user
+- ✅ `GET /api/v1/users/roles` - Get roles
+- ✅ Invalid ID validation
+- ✅ Filters by status and role
 
 ### 🎮 AuthController (auth.controller.test.ts)
 
-#### Endpoints de API
-- ✅ `POST /api/v1/auth/login` - Login de usuario
-- ✅ `POST /api/v1/auth/change-password` - Cambio de contraseña
-- ✅ `GET /api/v1/auth/me` - Obtener usuario actual
-- ✅ Validación de campos requeridos
-- ✅ Manejo de errores HTTP
+#### API Endpoints
+- ✅ `POST /api/v1/auth/login` - User login
+- ✅ `POST /api/v1/auth/change-password` - Password change
+- ✅ `GET /api/v1/auth/me` - Get current user
+- ✅ Required field validation
+- ✅ HTTP error handling
 
-## Cobertura de Código
+## Code Coverage
 
-Después de ejecutar `npm run test:coverage`, puedes ver el reporte en:
-- **Terminal**: Resumen de cobertura
-- **HTML**: `coverage/index.html` (abre en tu navegador)
+After running `npm run test:coverage`, you can view the report at:
+- **Terminal**: Coverage summary
+- **HTML**: `coverage/index.html` (open in your browser)
 
-### Objetivos de Cobertura
-- **Statements**: > 80%
-- **Branches**: > 75%
-- **Functions**: > 80%
-- **Lines**: > 80%
+## Best Practices
 
-## Mejores Prácticas
-
-### 1. Estructura de Tests
+### 1. Test Structure
 ```typescript
 describe('NombreDelModulo', () => {
   beforeEach(() => {
-    // Limpieza antes de cada test
+    // Cleanup before each test
     jest.clearAllMocks();
   });
 
@@ -165,39 +159,39 @@ describe('NombreDelModulo', () => {
 
 ### 2. Mocking
 ```typescript
-// Mock de módulos externos
+// Mock external modules
 jest.mock('../../../shared/repositories/user.repository');
 
-// Mock de implementación
+// Mock implementation
 (userRepository.findById as jest.Mock).mockResolvedValue(mockUser);
 ```
 
 ### 3. Assertions
 ```typescript
-// Valores
+// Values
 expect(value).toBe(expected);
 expect(value).toEqual(expected); // Deep equality
 
-// Propiedades
+// Properties
 expect(obj).toHaveProperty('key', 'value');
 
-// Errores
+// Errors
 await expect(asyncFn()).rejects.toThrow(Error);
 await expect(asyncFn()).rejects.toThrow('mensaje');
 
-// Llamadas a funciones
+// Function calls
 expect(mockFn).toHaveBeenCalledWith(arg1, arg2);
 expect(mockFn).toHaveBeenCalledTimes(1);
 ```
 
-## Agregar Nuevas Pruebas
+## Adding New Tests
 
-### 1. Crear archivo de prueba
+### 1. Create test file
 ```bash
 touch src/modules/[modulo]/__tests__/[archivo].test.ts
 ```
 
-### 2. Estructura básica
+### 2. Basic structure
 ```typescript
 import { serviceToTest } from '../service';
 
@@ -216,7 +210,7 @@ describe('ServiceToTest', () => {
 });
 ```
 
-### 3. Ejecutar las nuevas pruebas
+### 3. Run new tests
 ```bash
 npm test -- --testPathPattern=[modulo]
 ```
@@ -225,32 +219,23 @@ npm test -- --testPathPattern=[modulo]
 
 ### Error: Cannot find module
 ```bash
-# Reinstalar dependencias
+# Reinstall dependencies
 npm install
 ```
 
-### Tests no se ejecutan
+### Tests not running
 ```bash
-# Limpiar cache de Jest
+# Clear Jest cache
 npx jest --clearCache
 ```
 
-### Error de TypeScript
+### TypeScript error
 ```bash
-# Verificar tsconfig.json
+# Verify tsconfig.json
 npm run build
 ```
 
-## Próximos Pasos
-
-- [ ] Tests para módulo de libros (CU01-CU05)
-- [ ] Tests de integración E2E con base de datos de prueba
-- [ ] Tests para middleware de autenticación y autorización
-- [ ] Tests para repositorios
-- [ ] CI/CD con GitHub Actions
-- [ ] Aumentar cobertura de código > 90%
-
-## Recursos
+## Resources
 
 - [Jest Documentation](https://jestjs.io/docs/getting-started)
 - [Testing TypeScript](https://jestjs.io/docs/getting-started#using-typescript)

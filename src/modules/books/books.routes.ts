@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { asyncHandler } from '../../shared/middleware/errorHandler';
 import { authenticate, requireRole, optionalAuthenticate } from '../auth/auth.middleware';
 import { booksController } from './books.controller';
+import { logAction } from '../../shared/middleware/historyLogger';
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.post(
   '/categories',
   authenticate,
   requireRole(['Admin', 'Bibliotecario']),
+  logAction('crear', 'categoria'), // ← Logging automático
   asyncHandler(booksController.createCategory.bind(booksController))
 );
 
@@ -39,6 +41,7 @@ router.put(
   '/categories/:id',
   authenticate,
   requireRole(['Admin', 'Bibliotecario']),
+  logAction('modificar', 'categoria'), // ← Logging automático
   asyncHandler(booksController.updateCategory.bind(booksController))
 );
 
@@ -53,6 +56,7 @@ router.post(
   '/',
   authenticate,
   requireRole(['Admin', 'Bibliotecario']),
+  logAction('crear', 'libro'), // ← Logging automático
   asyncHandler(booksController.createBook.bind(booksController))
 );
 
@@ -82,6 +86,7 @@ router.put(
   '/:id',
   authenticate,
   requireRole(['Admin', 'Bibliotecario']),
+  logAction('modificar', 'libro'), // ← Logging automático
   asyncHandler(booksController.updateBook.bind(booksController))
 );
 
@@ -91,6 +96,7 @@ router.delete(
   '/:id',
   authenticate,
   requireRole(['Admin', 'Bibliotecario']),
+  logAction('eliminar', 'libro'), // ← Logging automático
   asyncHandler(booksController.deactivateBook.bind(booksController))
 );
 

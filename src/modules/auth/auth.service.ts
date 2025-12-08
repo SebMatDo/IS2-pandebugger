@@ -5,6 +5,7 @@ import { JwtPayload, LoginDto, LoginResponse } from './auth.types';
 import { User } from '../../shared/types/database.types';
 import { AppError } from '../../shared/middleware/errorHandler';
 import { userRepository } from '../../shared/repositories/user.repository';
+import historyService from '../history/history.service';
 
 const SALT_ROUNDS = 10;
 const JWT_SECRET: jwt.Secret = (process.env.JWT_SECRET as jwt.Secret) || 'your_jwt_secret_change_this_in_production';
@@ -101,10 +102,45 @@ export class AuthService {
     // Generate JWT token
     const token = this.generateToken(user);
 
-    // TODO: Log login event to historial
-    // await writeToHistorial(user.id, lookupCache.accionLogin?.id, lookupCache.ttUsuario?.id, user.id);
+    // Log login event to historial
+    await historyService.logLogin(user.id);
 
     return this.createLoginResponse(user, token);
+  }
+
+  /**
+   * Anonymous login - Generate token for anonymous user with Lector role
+   * Anonymous users can only view published books
+   */
+  async loginAnonymous(): Promise<LoginResponse> {
+    // Create anonymous user object (not persisted in database)
+    const anonymousUser: User = {
+      id: 0, // Special ID for anonymous users
+      nombres: 'Anónimo',
+      apellidos: 'Lector',
+      correo_electronico: 'anonimo@pandebugger.com',
+      hash_contraseña: '',
+      rol_id: 6, // Lector role ID (will be created in migration)
+      estado: true,
+      rol: {
+        id: 6,
+        nombre: 'Lector',
+        descripcion: 'Usuario anónimo con acceso solo a libros publicados'
+      }
+    };
+
+    // Generate JWT token for anonymous user
+    const token = this.generateToken(anonymousUser);
+
+    // Log anonymous login (no user_id since it's anonymous)
+    await historyService.logAction({
+      usuario_id: 0,
+      accion: 'login',
+      target_type: 'sistema',
+      detalles: { tipo: 'anonimo' }
+    }).catch(() => {}); // Don't fail if logging fails
+
+    return this.createLoginResponse(anonymousUser, token);
   }
 
   /**
@@ -134,7 +170,8 @@ export class AuthService {
     const newHash = await this.hashPassword(newPassword);
     await userRepository.update(userId, { hash_contraseña: newHash });
 
-    // TODO: Log password change to historial
+    // Log password change to historial
+    await historyService.logPasswordChange(userId);
   }
 }
 

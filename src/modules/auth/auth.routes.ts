@@ -7,6 +7,7 @@ const authController = new AuthController();
 
 // Public routes
 router.post('/login', (req, res, next) => authController.login(req, res, next));
+router.post('/login-anonymous', (req, res, next) => authController.loginAnonymous(req, res, next));
 router.post('/restore-password', (req, res, next) => authController.restorePassword(req, res, next));
 
 // Protected routes (require authentication)

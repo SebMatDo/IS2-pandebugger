@@ -91,14 +91,6 @@ src/
 └── server.ts            # Server entry point
 ```
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js >= 18.0.0
-- npm >= 9.0.0
-- Docker and Docker Compose (optional, for containerized development)
-
 ## 🏗️ **Architecture**
 
 **Modular Monolith** - Code organized into independent, self-contained modules:
@@ -152,38 +144,6 @@ IS2-pandebugger/
 
 ---
 
-## 📦 **Available Scripts**
-
-```bash
-# Development
-npm run dev              # Start development server with hot reload
-npm run build            # Compile TypeScript to JavaScript
-npm start                # Run production build
-
-# Testing
-npm test                 # Run all tests
-npm run test:watch       # Run tests in watch mode (development)
-npm run test:coverage    # Run tests with coverage report
-npm run test:verbose     # Run tests with detailed output
-npm run test:auth        # Run only authentication tests
-
-# Docker
-npm run docker:up        # Start all containers
-npm run docker:down      # Stop containers
-npm run docker:logs      # View logs
-npm run docker:clean     # Stop and remove volumes (⚠️ deletes data)
-
-# Database
-npm run db:migrate       # Run database migrations
-npm run db:seed          # Load test data
-npm run db:reset         # Migrate + seed
-
-# Code Quality
-npm run lint             # Lint code with ESLint
-npm run format           # Format code with Prettier
-```
-
----
 
 ##  **API Endpoints**
 
