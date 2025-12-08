@@ -1,6 +1,6 @@
 import { AppError } from '../../shared/middleware/errorHandler';
 import { Task } from '../../shared/types/database.types';
-import { taskRepository } from '../../shared/repositories/task.repository';
+import { taskRepository } from '../../shared/repositories/tasks.repository';
 import { CreateTaskDto, UpdateTaskDto, TaskResponse } from './tasks.types';
 
 
