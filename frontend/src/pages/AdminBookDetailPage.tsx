@@ -163,35 +163,51 @@ export default function AdminBookDetailPage() {
   }, [book])
 
   // Cargar historial del libro
-  useEffect(() => {
+  const loadHistory = async () => {
     if (!book) return
-
-    const loadHistory = async () => {
-      setHistoryLoading(true)
-      try {
-        const response = await apiGet<{ status: string; data: { records: any[] } }>(`/history?target_type=libro&target_id=${book.id}`)
-        if (response.status === 'success' && response.data?.records) {
-          setHistoryLogs(
-            response.data.records.map((log: any) => ({
-              id: log.id,
-              accion: log.accion_nombre || 'Acción desconocida',
-              usuario_nombre: log.usuario_nombre || 'Sistema',
-              usuario_email: log.usuario_email || '',
-              fecha: log.fecha || log.created_at,
-              target_nombre: log.target_nombre || '',
-              detalles: log.detalles || {},
-            }))
-          )
-        }
-      } catch (err) {
-        console.error('Error cargando historial:', err)
-      } finally {
-        setHistoryLoading(false)
+    
+    setHistoryLoading(true)
+    try {
+      // Cargar logs del libro
+      const bookLogsResponse = await apiGet<{ status: string; data: { records: any[] } }>(`/history?target_type=libro&target_id=${book.id}`)
+      
+      let allLogs: any[] = []
+      
+      if (bookLogsResponse.status === 'success' && bookLogsResponse.data?.records) {
+        allLogs = [...bookLogsResponse.data.records]
       }
+      
+      // Cargar logs de tareas relacionadas a este libro
+      const taskLogsResponse = await apiGet<{ status: string; data: { records: any[] } }>(`/history?target_type=tarea&libro_id=${book.id}`)
+      
+      if (taskLogsResponse.status === 'success' && taskLogsResponse.data?.records) {
+        allLogs = [...allLogs, ...taskLogsResponse.data.records]
+      }
+      
+      // Ordenar todos los logs por fecha (más recientes primero)
+      allLogs.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+      
+      setHistoryLogs(
+        allLogs.map((log: any) => ({
+          id: log.id,
+          accion: log.accion_nombre || 'Acción desconocida',
+          usuario_nombre: log.usuario_nombre || 'Sistema',
+          usuario_email: log.usuario_email || '',
+          fecha: log.fecha || log.created_at,
+          target_nombre: log.target_nombre || '',
+          detalles: log.detalles || {},
+        }))
+      )
+    } catch (err) {
+      console.error('Error cargando historial:', err)
+    } finally {
+      setHistoryLoading(false)
     }
+  }
 
+  useEffect(() => {
     loadHistory()
-  }, [book])
+  }, [book, currentTask])
 
   // Abrir modal de asignación
   const openAssignModal = async () => {
@@ -311,6 +327,11 @@ export default function AdminBookDetailPage() {
       }
 
       setShowAssignModal(false)
+      
+      // Recargar historial para mostrar el nuevo log
+      setTimeout(() => {
+        loadHistory()
+      }, 500)
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Error al guardar la asignación'
       setAssignError(errorMessage)
@@ -366,6 +387,10 @@ export default function AdminBookDetailPage() {
       }
       
       setShowEditModal(false)
+      // Recargar historial para mostrar el nuevo log
+      setTimeout(() => {
+        loadHistory()
+      }, 500)
       // Forzar re-render navegando a la misma página
       navigate(`/admin/books/${book.id}`, { state: { book: { ...book, ...payload } }, replace: true })
     } catch (err: unknown) {
@@ -432,6 +457,10 @@ export default function AdminBookDetailPage() {
       }
       
       setShowAdvanceModal(false)
+      // Recargar historial para mostrar el nuevo log
+      setTimeout(() => {
+        loadHistory()
+      }, 500)
       navigate(`/admin/books/${book.id}`, { state: { book: updatedBook }, replace: true })
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Error al avanzar el estado'
@@ -714,7 +743,14 @@ export default function AdminBookDetailPage() {
                   {(showAllLogs ? historyLogs : historyLogs.slice(0, 3)).map((log) => (
                     <div key={log.id} className="history-log-item">
                       <div className="history-log-header">
-                        <span className="history-log-action">{log.accion}</span>
+                        <span className="history-log-action">
+                          {log.accion === 'asignar_tarea' ? 'Asignación de tarea' : 
+                           log.accion === 'cambiar_estado' ? 'Cambio de estado' :
+                           log.accion === 'actualizar' ? 'Actualizar' :
+                           log.accion === 'crear' ? 'Crear' :
+                           log.accion === 'eliminar' ? 'Eliminar' :
+                           log.accion}
+                        </span>
                         <span className="history-log-date">
                           {new Date(log.fecha).toLocaleString('es-ES', {
                             year: 'numeric',
@@ -737,35 +773,158 @@ export default function AdminBookDetailPage() {
                         )}
                         {log.detalles && Object.keys(log.detalles).length > 0 && (
                           <div className="history-log-details">
-                            {log.detalles.campo && (
-                              <span className="history-log-detail-item">
-                                <strong>Campo modificado:</strong> {log.detalles.campo}
-                              </span>
+                            {/* Información de asignación de tarea */}
+                            {log.accion === 'asignar_tarea' && (
+                              <>
+                                {log.detalles.usuario_asignado && (
+                                  <span className="history-log-detail-item">
+                                    <strong>Usuario asignado:</strong> {log.detalles.usuario_asignado}
+                                  </span>
+                                )}
+                                {log.detalles.fecha_limite && (
+                                  <span className="history-log-detail-item">
+                                    <strong>Fecha límite:</strong> {new Date(log.detalles.fecha_limite).toLocaleDateString('es-ES', {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric'
+                                    })}
+                                  </span>
+                                )}
+                                {log.detalles.libro_titulo && log.detalles.libro_titulo !== 'Desconocido' && (
+                                  <span className="history-log-detail-item">
+                                    <strong>Libro:</strong> {log.detalles.libro_titulo}
+                                  </span>
+                                )}
+                              </>
                             )}
-                            {log.detalles.valor_anterior && (
-                              <span className="history-log-detail-item">
-                                <strong>Valor anterior:</strong> {log.detalles.valor_anterior}
-                              </span>
+                            
+                            {/* Información de actualización de tarea */}
+                            {log.accion === 'actualizar' && (
+                              <>
+                                {log.detalles.usuario_anterior && log.detalles.usuario_nuevo && (
+                                  <span className="history-log-detail-item">
+                                    <strong>Cambio de usuario:</strong> {log.detalles.usuario_anterior} → {log.detalles.usuario_nuevo}
+                                  </span>
+                                )}
+                                {log.detalles.fecha_anterior && log.detalles.fecha_nueva && (
+                                  <span className="history-log-detail-item">
+                                    <strong>Cambio de fecha:</strong> {
+                                      new Date(log.detalles.fecha_anterior).toLocaleDateString('es-ES', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric'
+                                      })
+                                    } → {
+                                      new Date(log.detalles.fecha_nueva).toLocaleDateString('es-ES', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric'
+                                      })
+                                    }
+                                  </span>
+                                )}
+                                {log.detalles.libro_titulo && log.detalles.libro_titulo !== 'Desconocido' && (
+                                  <span className="history-log-detail-item">
+                                    <strong>Libro:</strong> {log.detalles.libro_titulo}
+                                  </span>
+                                )}
+                              </>
                             )}
-                            {log.detalles.valor_nuevo && (
-                              <span className="history-log-detail-item">
-                                <strong>Valor nuevo:</strong> {log.detalles.valor_nuevo}
-                              </span>
+                            
+                            {/* Información de cambio de estado de libro */}
+                            {log.accion === 'cambiar_estado' && (
+                              <>
+                                {log.detalles.estado_anterior && log.detalles.estado_nuevo && (
+                                  <div className="history-log-detail-item">
+                                    <strong>Estado del libro actualizado:</strong>
+                                    <div style={{ marginLeft: '1rem', marginTop: '0.5rem' }}>
+                                      <span style={{ display: 'block', marginBottom: '0.25rem' }}>
+                                        <strong>Anterior:</strong> {log.detalles.estado_anterior}
+                                      </span>
+                                      <span style={{ display: 'block' }}>
+                                        <strong>Nuevo:</strong> {log.detalles.estado_nuevo}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                                {log.detalles.libro_titulo && (
+                                  <span className="history-log-detail-item">
+                                    <strong>Libro:</strong> {log.detalles.libro_titulo}
+                                  </span>
+                                )}
+                              </>
                             )}
-                            {log.detalles.titulo && (
-                              <span className="history-log-detail-item">
-                                <strong>Título:</strong> {log.detalles.titulo}
-                              </span>
+                            
+                            {/* Información de actualización con cambios de campos */}
+                            {log.accion === 'actualizar' && log.detalles.cambios && Array.isArray(log.detalles.cambios) && (
+                              <>
+                                <div className="history-log-detail-item">
+                                  <strong>Libro:</strong> {log.detalles.libro_titulo}
+                                </div>
+                                <div className="history-log-detail-item">
+                                  <strong>Campos modificados:</strong>
+                                  <div style={{ marginTop: '0.5rem', marginLeft: '1rem' }}>
+                                    {log.detalles.cambios.map((cambio: any, idx: number) => {
+                                      // Mapeo de nombres de campos a español
+                                      const fieldNames: Record<string, string> = {
+                                        'isbn': 'ISBN',
+                                        'titulo': 'Título',
+                                        'autor': 'Autor',
+                                        'fecha': 'Fecha',
+                                        'numero_paginas': 'Número de páginas',
+                                        'estanteria': 'Estantería',
+                                        'espacio': 'Espacio',
+                                        'categoria_id': 'Categoría',
+                                        'directorio_pdf': 'Directorio PDF',
+                                        'directorio_img': 'Directorio IMG'
+                                      };
+                                      const displayName = fieldNames[cambio.campo] || cambio.campo;
+                                      
+                                      return (
+                                        <div key={idx} style={{ marginBottom: '0.5rem' }}>
+                                          <strong>{displayName}:</strong> {String(cambio.valor_anterior)} → {String(cambio.valor_nuevo)}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </>
                             )}
-                            {log.detalles.autor && (
-                              <span className="history-log-detail-item">
-                                <strong>Autor:</strong> {log.detalles.autor}
-                              </span>
-                            )}
-                            {log.detalles.isbn && (
-                              <span className="history-log-detail-item">
-                                <strong>ISBN:</strong> {log.detalles.isbn}
-                              </span>
+                            
+                            {/* Información de modificación general */}
+                            {log.accion !== 'asignar_tarea' && log.accion !== 'actualizar' && log.accion !== 'cambiar_estado' && (
+                              <>
+                                {log.detalles.campo && (
+                                  <span className="history-log-detail-item">
+                                    <strong>Campo modificado:</strong> {log.detalles.campo}
+                                  </span>
+                                )}
+                                {log.detalles.valor_anterior && (
+                                  <span className="history-log-detail-item">
+                                    <strong>Valor anterior:</strong> {log.detalles.valor_anterior}
+                                  </span>
+                                )}
+                                {log.detalles.valor_nuevo && (
+                                  <span className="history-log-detail-item">
+                                    <strong>Valor nuevo:</strong> {log.detalles.valor_nuevo}
+                                  </span>
+                                )}
+                                {log.detalles.titulo && (
+                                  <span className="history-log-detail-item">
+                                    <strong>Título:</strong> {log.detalles.titulo}
+                                  </span>
+                                )}
+                                {log.detalles.autor && (
+                                  <span className="history-log-detail-item">
+                                    <strong>Autor:</strong> {log.detalles.autor}
+                                  </span>
+                                )}
+                                {log.detalles.isbn && (
+                                  <span className="history-log-detail-item">
+                                    <strong>ISBN:</strong> {log.detalles.isbn}
+                                  </span>
+                                )}
+                              </>
                             )}
                           </div>
                         )}

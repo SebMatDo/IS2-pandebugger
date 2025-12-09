@@ -41,7 +41,7 @@ router.put(
   '/categories/:id',
   authenticate,
   requireRole(['Admin', 'Bibliotecario']),
-  logAction('modificar', 'categoria'), // ← Logging automático
+  logAction('actualizar', 'categoria'), // ← Logging automático
   asyncHandler(booksController.updateCategory.bind(booksController))
 );
 
@@ -86,7 +86,7 @@ router.put(
   '/:id',
   authenticate,
   requireRole(['Admin', 'Bibliotecario']),
-  logAction('modificar', 'libro'), // ← Logging automático
+  logAction('actualizar', 'libro'), // ← Logging automático
   asyncHandler(booksController.updateBook.bind(booksController))
 );
 

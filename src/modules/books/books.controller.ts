@@ -80,6 +80,22 @@ export class BooksController {
     const userId = req.user!.userId;
 
     const book = await booksService.updateBook(id, dto, userId);
+    
+    // If state changed, store details for history logging
+    if ((book as any)._stateChanged) {
+      (res as any).locals.historyDetails = (book as any)._stateChanged;
+      (res as any).locals.historyAction = 'cambiar_estado';
+      
+      // Remove metadata from response
+      delete (book as any)._stateChanged;
+    }
+    // If other fields changed, store details for history logging
+    else if ((book as any)._fieldsChanged) {
+      (res as any).locals.historyDetails = (book as any)._fieldsChanged;
+      
+      // Remove metadata from response
+      delete (book as any)._fieldsChanged;
+    }
 
     res.status(200).json({
       success: true,

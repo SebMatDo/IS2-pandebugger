@@ -50,6 +50,7 @@ export interface HistoryFilters {
   accion_id?: number;
   target_type_id?: number;
   target_id?: number;
+  libro_id?: number;
   fecha_inicio?: string;
   fecha_fin?: string;
   limit?: number;

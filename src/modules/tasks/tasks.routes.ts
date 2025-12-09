@@ -36,6 +36,6 @@ router.post('/', requireRole(['Admin', 'Bibliotecario']), logAction('asignar_tar
  * Update task
  * Only Admin and Bibliotecario can update tasks
  */
-router.put('/:id', requireRole(['Admin', 'Bibliotecario']), logAction('modificar', 'tarea'), tasksController.updateTask);
+router.put('/:id', requireRole(['Admin', 'Bibliotecario']), logAction('actualizar', 'tarea'), tasksController.updateTask);
 
 export default router;

@@ -15,6 +15,14 @@ export class TasksController {
 
       const newTask = await tasksService.createTask(dto);
 
+      // Agregar detalles al historial
+      (res as any).locals.historyDetails = {
+        libro_id: newTask.libro_id,
+        usuario_asignado: newTask.usuario?.nombres ? `${newTask.usuario.nombres} ${newTask.usuario.apellidos}` : 'Sin asignar',
+        fecha_limite: newTask.fecha_finalizacion || 'Sin fecha',
+        libro_titulo: newTask.libro?.titulo || 'Desconocido',
+      };
+
       res.status(201).json(
         createSuccessResponse(newTask, 'Tarea creada exitosamente')
       );
@@ -87,7 +95,33 @@ export class TasksController {
         return;
       }
 
+      // Obtener tarea actual antes de actualizar para comparar
+      const currentTask = await tasksService.getTaskById(id);
+      
       const updatedTask = await tasksService.updateTask(id, dto);
+
+      // Construir detalles descriptivos del cambio
+      const details: any = {
+        libro_id: updatedTask.libro_id,
+        libro_titulo: updatedTask.libro?.titulo || 'Desconocido',
+      };
+
+      if (dto.usuario_id !== undefined && currentTask.usuario_id !== dto.usuario_id) {
+        details.usuario_anterior = currentTask.usuario?.nombres 
+          ? `${currentTask.usuario.nombres} ${currentTask.usuario.apellidos}` 
+          : 'Sin asignar';
+        details.usuario_nuevo = updatedTask.usuario?.nombres 
+          ? `${updatedTask.usuario.nombres} ${updatedTask.usuario.apellidos}` 
+          : 'Sin asignar';
+      }
+
+      if (dto.fecha_finalizacion && currentTask.fecha_finalizacion !== dto.fecha_finalizacion) {
+        details.fecha_anterior = currentTask.fecha_finalizacion || 'Sin fecha';
+        details.fecha_nueva = updatedTask.fecha_finalizacion || 'Sin fecha';
+      }
+
+      // Agregar detalles al historial
+      (res as any).locals.historyDetails = details;
 
       res.status(200).json(
         createSuccessResponse(updatedTask, 'Tarea actualizada exitosamente')

@@ -20,6 +20,7 @@ export class HistoryController {
         accion_id: req.query.accion_id ? parseInt(req.query.accion_id as string) : undefined,
         target_type_id: req.query.target_type_id ? parseInt(req.query.target_type_id as string) : undefined,
         target_id: req.query.target_id ? parseInt(req.query.target_id as string) : undefined,
+        libro_id: req.query.libro_id ? parseInt(req.query.libro_id as string) : undefined,
         fecha_inicio: req.query.fecha_inicio as string,
         fecha_fin: req.query.fecha_fin as string,
         limit: req.query.limit ? parseInt(req.query.limit as string) : 50,

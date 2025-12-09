@@ -104,6 +104,12 @@ export class HistoryRepository {
       paramCount++;
     }
 
+    if (filters.libro_id) {
+      conditions.push(`t.libro_id = $${paramCount}`);
+      values.push(filters.libro_id);
+      paramCount++;
+    }
+
     if (filters.fecha_inicio) {
       conditions.push(`h.fecha >= $${paramCount}`);
       values.push(filters.fecha_inicio);
@@ -118,12 +124,21 @@ export class HistoryRepository {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    // Get total count
-    const countQuery = `
+    // Get total count - include JOINs if libro_id filter is used
+    let countQuery = `
       SELECT COUNT(*) as total
       FROM historial h
-      ${whereClause}
     `;
+    
+    if (filters.libro_id) {
+      countQuery += `
+      LEFT JOIN target_type tt ON h.target_type_id = tt.id
+      LEFT JOIN tareas t ON tt.nombre = 'tarea' AND h.target_id = t.id
+      `;
+    }
+    
+    countQuery += whereClause;
+    
     const countResult = await db.query<{ total: string }>(countQuery, values);
     const total = parseInt(countResult.rows[0].total);
 

@@ -230,11 +230,34 @@ export class BooksService {
    * Only Admin and Bibliotecario can modify
    */
   async updateBook(id: number, dto: UpdateBookDto, editorUserId: number): Promise<BookResponse> {
-    // Check if book exists
-    const bookCheck = await db.query('SELECT id FROM libros WHERE id = $1', [id]);
-    if (bookCheck.rows.length === 0) {
+    // Check if book exists and get current state
+    const currentBook = await db.query<{ 
+      id: number; 
+      titulo: string; 
+      autor: string;
+      isbn: string;
+      fecha: Date;
+      numero_paginas: number;
+      estanteria: string;
+      espacio: string;
+      categoria_id: number;
+      estado_id: number; 
+      estado_nombre: string;
+      directorio_pdf: string | null;
+      directorio_img: string | null;
+    }>(
+      `SELECT l.*, e.nombre as estado_nombre 
+       FROM libros l 
+       LEFT JOIN estados_libro e ON l.estado_id = e.id 
+       WHERE l.id = $1`,
+      [id]
+    );
+    
+    if (currentBook.rows.length === 0) {
       throw new AppError('Libro no encontrado.', 404);
     }
+
+    const oldBook = currentBook.rows[0];
 
     // Validate numero_paginas if provided
     if (dto.numero_paginas !== undefined && dto.numero_paginas <= 0) {
@@ -246,61 +269,82 @@ export class BooksService {
       throw new AppError('La categoría seleccionada no existe.', 400);
     }
 
-    // Validate state if provided
+    // Validate state if provided and capture new state name
+    let newStateName: string | undefined;
     if (dto.estado_id && !(await this.stateExists(dto.estado_id))) {
       throw new AppError('El estado seleccionado no existe.', 400);
     }
+    
+    if (dto.estado_id && dto.estado_id !== oldBook.estado_id) {
+      const stateResult = await db.query<{ nombre: string }>('SELECT nombre FROM estados_libro WHERE id = $1', [dto.estado_id]);
+      newStateName = stateResult.rows[0]?.nombre;
+    }
 
-    // Build update query dynamically
+    // Track field changes for logging
+    const fieldChanges: Array<{ campo: string; valor_anterior: any; valor_nuevo: any }> = [];
+    
+    // Build update query dynamically and track changes
     const fields: string[] = [];
     const values: any[] = [];
     let paramCount = 1;
 
-    if (dto.isbn !== undefined) {
+    if (dto.isbn !== undefined && dto.isbn !== oldBook.isbn) {
       fields.push(`isbn = $${paramCount}`);
       values.push(dto.isbn);
+      fieldChanges.push({ campo: 'isbn', valor_anterior: oldBook.isbn, valor_nuevo: dto.isbn });
       paramCount++;
     }
 
-    if (dto.titulo !== undefined) {
+    if (dto.titulo !== undefined && dto.titulo !== oldBook.titulo) {
       fields.push(`titulo = $${paramCount}`);
       values.push(dto.titulo);
+      fieldChanges.push({ campo: 'titulo', valor_anterior: oldBook.titulo, valor_nuevo: dto.titulo });
       paramCount++;
     }
 
-    if (dto.autor !== undefined) {
+    if (dto.autor !== undefined && dto.autor !== oldBook.autor) {
       fields.push(`autor = $${paramCount}`);
       values.push(dto.autor);
+      fieldChanges.push({ campo: 'autor', valor_anterior: oldBook.autor, valor_nuevo: dto.autor });
       paramCount++;
     }
 
     if (dto.fecha !== undefined) {
-      fields.push(`fecha = $${paramCount}`);
-      values.push(dto.fecha);
-      paramCount++;
+      const oldDate = oldBook.fecha?.toISOString().split('T')[0];
+      const newDate = new Date(dto.fecha).toISOString().split('T')[0];
+      if (oldDate !== newDate) {
+        fields.push(`fecha = $${paramCount}`);
+        values.push(dto.fecha);
+        fieldChanges.push({ campo: 'fecha', valor_anterior: oldDate, valor_nuevo: newDate });
+        paramCount++;
+      }
     }
 
-    if (dto.numero_paginas !== undefined) {
+    if (dto.numero_paginas !== undefined && dto.numero_paginas !== oldBook.numero_paginas) {
       fields.push(`numero_paginas = $${paramCount}`);
       values.push(dto.numero_paginas);
+      fieldChanges.push({ campo: 'numero_paginas', valor_anterior: oldBook.numero_paginas, valor_nuevo: dto.numero_paginas });
       paramCount++;
     }
 
-    if (dto.estanteria !== undefined) {
+    if (dto.estanteria !== undefined && dto.estanteria !== oldBook.estanteria) {
       fields.push(`estanteria = $${paramCount}`);
       values.push(dto.estanteria);
+      fieldChanges.push({ campo: 'estanteria', valor_anterior: oldBook.estanteria, valor_nuevo: dto.estanteria });
       paramCount++;
     }
 
-    if (dto.espacio !== undefined) {
+    if (dto.espacio !== undefined && dto.espacio !== oldBook.espacio) {
       fields.push(`espacio = $${paramCount}`);
       values.push(dto.espacio);
+      fieldChanges.push({ campo: 'espacio', valor_anterior: oldBook.espacio, valor_nuevo: dto.espacio });
       paramCount++;
     }
 
-    if (dto.categoria_id !== undefined) {
+    if (dto.categoria_id !== undefined && dto.categoria_id !== oldBook.categoria_id) {
       fields.push(`categoria_id = $${paramCount}`);
       values.push(dto.categoria_id);
+      fieldChanges.push({ campo: 'categoria_id', valor_anterior: oldBook.categoria_id, valor_nuevo: dto.categoria_id });
       paramCount++;
     }
 
@@ -310,15 +354,17 @@ export class BooksService {
       paramCount++;
     }
 
-    if (dto.directorio_pdf !== undefined) {
+    if (dto.directorio_pdf !== undefined && dto.directorio_pdf !== oldBook.directorio_pdf) {
       fields.push(`directorio_pdf = $${paramCount}`);
       values.push(dto.directorio_pdf);
+      fieldChanges.push({ campo: 'directorio_pdf', valor_anterior: oldBook.directorio_pdf, valor_nuevo: dto.directorio_pdf });
       paramCount++;
     }
 
-    if (dto.directorio_img !== undefined) {
+    if (dto.directorio_img !== undefined && dto.directorio_img !== oldBook.directorio_img) {
       fields.push(`directorio_img = $${paramCount}`);
       values.push(dto.directorio_img);
+      fieldChanges.push({ campo: 'directorio_img', valor_anterior: oldBook.directorio_img, valor_nuevo: dto.directorio_img });
       paramCount++;
     }
 
@@ -332,10 +378,33 @@ export class BooksService {
     const query = `UPDATE libros SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING id`;
     await db.query(query, values);
 
-    // TODO: Log to historial
-    // await writeToHistorial(editorUserId, accionEditar.id, ttLibro.id, id);
-
-    return this.getBookById(id, undefined, true);
+    // Return updated book with metadata for history logging
+    const updatedBook = await this.getBookById(id, undefined, true);
+    
+    // Return with metadata about changes
+    // Priority: state change > field changes
+    if (newStateName) {
+      return {
+        ...updatedBook,
+        _stateChanged: {
+          libro_id: id,
+          libro_titulo: oldBook.titulo,
+          estado_anterior: oldBook.estado_nombre,
+          estado_nuevo: newStateName
+        }
+      } as BookResponse;
+    } else if (fieldChanges.length > 0) {
+      return {
+        ...updatedBook,
+        _fieldsChanged: {
+          libro_id: id,
+          libro_titulo: oldBook.titulo,
+          cambios: fieldChanges
+        }
+      } as BookResponse;
+    }
+    
+    return updatedBook;
   }
 
   /**

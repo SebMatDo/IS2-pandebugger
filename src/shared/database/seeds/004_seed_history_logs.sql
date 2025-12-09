@@ -140,7 +140,12 @@ INSERT INTO historial (fecha, usuario_id, accion_id, target_type_id, target_id, 
      (SELECT id FROM target_type WHERE nombre = 'tarea'),
      (SELECT MIN(id) FROM tareas WHERE libro_id = (SELECT id FROM libros WHERE isbn = '978-0-13-468599-1') 
         AND usuario_id = (SELECT id FROM usuarios WHERE correo_electronico = 'carlos.ramirez@pandebugger.com')),
-     '{"libro": "The Pragmatic Programmer", "asignado_a": "Carlos Ramírez", "tipo": "Digitalización"}'::jsonb),
+     jsonb_build_object(
+        'libro_id', (SELECT id FROM libros WHERE isbn = '978-0-13-468599-1'),
+        'libro_titulo', 'The Pragmatic Programmer',
+        'usuario_asignado', 'Carlos Ramírez',
+        'fecha_limite', (CURRENT_TIMESTAMP + INTERVAL '30 days')::text
+     )),
     
     -- Bibliotecario (María) assigning review task to Ana
     (CURRENT_TIMESTAMP - INTERVAL '1 day',
@@ -149,7 +154,12 @@ INSERT INTO historial (fecha, usuario_id, accion_id, target_type_id, target_id, 
      (SELECT id FROM target_type WHERE nombre = 'tarea'),
      (SELECT MIN(id) FROM tareas WHERE libro_id = (SELECT id FROM libros WHERE isbn = '978-0-385-50986-1')
         AND usuario_id = (SELECT id FROM usuarios WHERE correo_electronico = 'ana.martinez@pandebugger.com')),
-     '{"libro": "Una breve historia del tiempo", "asignado_a": "Ana Martínez", "tipo": "Revisión"}'::jsonb),
+     jsonb_build_object(
+        'libro_id', (SELECT id FROM libros WHERE isbn = '978-0-385-50986-1'),
+        'libro_titulo', 'Una breve historia del tiempo',
+        'usuario_asignado', 'Ana Martínez',
+        'fecha_limite', (CURRENT_TIMESTAMP + INTERVAL '30 days')::text
+     )),
     
     -- Admin assigning restoration task to Luis
     (CURRENT_TIMESTAMP - INTERVAL '1 day',
@@ -158,7 +168,12 @@ INSERT INTO historial (fecha, usuario_id, accion_id, target_type_id, target_id, 
      (SELECT id FROM target_type WHERE nombre = 'tarea'),
      (SELECT MIN(id) FROM tareas WHERE libro_id = (SELECT id FROM libros WHERE isbn = '978-84-206-3765-2')
         AND usuario_id = (SELECT id FROM usuarios WHERE correo_electronico = 'luis.fernandez@pandebugger.com')),
-     '{"libro": "El mundo de Sofía", "asignado_a": "Luis Fernández", "tipo": "Restauración"}'::jsonb);
+     jsonb_build_object(
+        'libro_id', (SELECT id FROM libros WHERE isbn = '978-84-206-3765-2'),
+        'libro_titulo', 'El mundo de Sofía',
+        'usuario_asignado', 'Luis Fernández',
+        'fecha_limite', (CURRENT_TIMESTAMP + INTERVAL '30 days')::text
+     ));
 
 -- ===========================================
 -- LOGS FOR BOOK STATE CHANGES
@@ -169,26 +184,41 @@ INSERT INTO historial (fecha, usuario_id, accion_id, target_type_id, target_id, 
     -- Cien años de soledad moved to Disponible
     (CURRENT_TIMESTAMP - INTERVAL '12 hours',
      (SELECT id FROM usuarios WHERE correo_electronico = 'maria.gonzalez@pandebugger.com'),
-     (SELECT id FROM accion WHERE nombre = 'actualizar'),
+     (SELECT id FROM accion WHERE nombre = 'cambiar_estado'),
      (SELECT id FROM target_type WHERE nombre = 'libro'),
      (SELECT id FROM libros WHERE isbn = '978-0-06-112008-4' LIMIT 1),
-     '{"campo": "estado", "valor_anterior": "En Clasificación", "valor_nuevo": "Disponible"}'::jsonb),
+     jsonb_build_object(
+        'libro_id', (SELECT id FROM libros WHERE isbn = '978-0-06-112008-4'),
+        'libro_titulo', 'Cien años de soledad',
+        'estado_anterior', 'En Clasificación',
+        'estado_nuevo', 'Disponible'
+     )),
     
     -- Sapiens moved to Disponible
     (CURRENT_TIMESTAMP - INTERVAL '10 hours',
      (SELECT id FROM usuarios WHERE correo_electronico = 'admin@pandebugger.com'),
-     (SELECT id FROM accion WHERE nombre = 'actualizar'),
+     (SELECT id FROM accion WHERE nombre = 'cambiar_estado'),
      (SELECT id FROM target_type WHERE nombre = 'libro'),
      (SELECT id FROM libros WHERE isbn = '978-0-06-251658-0' LIMIT 1),
-     '{"campo": "estado", "valor_anterior": "En Clasificación", "valor_nuevo": "Disponible"}'::jsonb),
+     jsonb_build_object(
+        'libro_id', (SELECT id FROM libros WHERE isbn = '978-0-06-251658-0'),
+        'libro_titulo', 'Sapiens: De animales a dioses',
+        'estado_anterior', 'En Clasificación',
+        'estado_nuevo', 'Disponible'
+     )),
     
     -- El principito moved to Disponible
     (CURRENT_TIMESTAMP - INTERVAL '8 hours',
      (SELECT id FROM usuarios WHERE correo_electronico = 'maria.gonzalez@pandebugger.com'),
-     (SELECT id FROM accion WHERE nombre = 'actualizar'),
+     (SELECT id FROM accion WHERE nombre = 'cambiar_estado'),
      (SELECT id FROM target_type WHERE nombre = 'libro'),
      (SELECT id FROM libros WHERE isbn = '978-0-06-440055-8' LIMIT 1),
-     '{"campo": "estado", "valor_anterior": "En Revisión Digital", "valor_nuevo": "Disponible"}'::jsonb);
+     jsonb_build_object(
+        'libro_id', (SELECT id FROM libros WHERE isbn = '978-0-06-440055-8'),
+        'libro_titulo', 'El principito',
+        'estado_anterior', 'En Revisión Digital',
+        'estado_nuevo', 'Disponible'
+     ));
 
 -- ===========================================
 -- LOGS FOR LOGIN ACTIVITY (Sample)
