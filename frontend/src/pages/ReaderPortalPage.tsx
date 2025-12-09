@@ -50,6 +50,30 @@ type LoginResponse = {
   timestamp: string
 }
 
+async function fetchCoverUrl(bookId: number): Promise<string> {
+  try {
+    const token = localStorage.getItem('token') ?? ''
+
+    const res = await fetch(`/${bookId}/cover`, {
+      headers: token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : {},
+    })
+
+    if (!res.ok) {
+      throw new Error('No se pudo obtener la portada')
+    }
+
+    const blob = await res.blob()
+    return URL.createObjectURL(blob)
+  } catch (error) {
+    console.error('Error al cargar portada del libro', bookId, error)
+    return 'https://via.placeholder.com/240x320?text=Libro'
+  }
+}
+
 export default function ReaderPortalPage() {
   const navigate = useNavigate()
 
@@ -88,24 +112,23 @@ async function AnonymousToken(): Promise<string> {
     return token
   }
   
-  async function loadBooks() {
-    try {
-      setLoading(true)
-      setError(null)
+async function loadBooks() {
+  try {
+    setLoading(true)
+    setError(null)
 
-      await AnonymousToken()
+    await AnonymousToken()
 
-      const res = await apiGet<{ success: boolean; data: ApiBook[] }>('/books')
+    const res = await apiGet<{ success: boolean; data: ApiBook[] }>('/books')
 
-      if (!res.success) {
-        throw new Error('Error al cargar libros')
-      }
+    if (!res.success) {
+      throw new Error('Error al cargar libros')
+    }
 
-      const published = res.data.filter(
-        (b) => b.estado.id === 7
-      )
+    const published = res.data.filter((b) => b.estado.id === 7)
 
-      const mapped: Book[] = published.map((b) => {
+    const mapped: Book[] = await Promise.all(
+      published.map(async (b) => {
         let year: number | null = null
         if (b.fecha) {
           const d = new Date(b.fecha)
@@ -114,24 +137,28 @@ async function AnonymousToken(): Promise<string> {
           }
         }
 
+        const coverUrl = await fetchCoverUrl(b.id)
+
         return {
           id: b.id,
           title: b.titulo,
           author: b.autor,
           year,
-          coverUrl: 'https://via.placeholder.com/240x320?text=Libro',
+          coverUrl,
         }
       })
+    )
 
-      setBooks(mapped)
-    } catch (err: any) {
-      console.error(err)
-      setError(err.message ?? 'Error al cargar libros')
-      setBooks([])
-    } finally {
-      setLoading(false)
-    }
+    setBooks(mapped)
+  } catch (err: any) {
+    console.error(err)
+    setError(err.message ?? 'Error al cargar libros')
+    setBooks([])
+  } finally {
+    setLoading(false)
   }
+}
+
 
   useEffect(() => {
     loadBooks()
