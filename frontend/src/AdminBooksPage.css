@@ -1,4 +1,3 @@
-/* ==== ADMIN BOOKS LIST VIEW ==== */
 
 .admin-books-header {
   display: flex;
@@ -177,4 +176,162 @@
 
 .admin-books-row:hover {
   background-color: #f9fafb;
+}
+
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+}
+
+.admin-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 28px;
+  width: 640px;
+  max-width: 95vw;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
+}
+
+.admin-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.admin-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.admin-modal-close {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.admin-modal-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.admin-modal-error {
+  color: #b91c1c;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.admin-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-modal-row {
+  display: flex;
+  gap: 12px;
+}
+
+.admin-modal-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-modal-field-full {
+  flex: 1;
+}
+
+.admin-modal-label {
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.admin-modal-input {
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.admin-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Contenedor input + botón */
+.admin-modal-input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Botoncito "!" */
+.admin-modal-icon-button {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f3f4f6;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.admin-modal-icon-button:hover {
+  background: #e5e7eb;
+}
+
+/* Popover flotante a la derecha */
+.admin-modal-popover {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%);
+  margin-left: 0.75rem;
+  min-width: 220px;
+  max-width: 260px;
+  background: #ffffff;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+  padding: 0.75rem 1rem;
+  z-index: 50;
+}
+
+.admin-modal-popover-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.admin-modal-popover-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+}
+
+.admin-modal-popover-list li {
+  margin-bottom: 0.25rem;
+}
+
+.admin-modal-popover-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6b7280;
 }
