@@ -46,7 +46,7 @@ type TaskAssignment = {
   id: number
   usuario_id: number
   usuario_nombre: string
-  fecha_maxima: string | null
+  fecha_finalizacion: string | null
 }
 
 type HistoryLog = {
@@ -145,7 +145,7 @@ export default function AdminBookDetailPage() {
             usuario_nombre: task.usuario 
               ? `${task.usuario.nombres} ${task.usuario.apellidos}` 
               : 'Sin asignar',
-            fecha_maxima: task.fecha_maxima || task.fecha_asignacion || null,
+            fecha_finalizacion: task.fecha_finalizacion || task.fecha_asignacion || null,
           }
           
           console.log('Tarea mapeada:', mappedTask) // Debug
@@ -202,7 +202,7 @@ export default function AdminBookDetailPage() {
     
     // Establecer fecha mínima como hoy
     const today = new Date().toISOString().split('T')[0]
-    setMaxDate(currentTask?.fecha_maxima ? currentTask.fecha_maxima.split('T')[0] : today)
+    setMaxDate(currentTask?.fecha_finalizacion ? currentTask.fecha_finalizacion.split('T')[0] : today)
     
     // Cargar lista de usuarios
     try {
@@ -265,7 +265,7 @@ export default function AdminBookDetailPage() {
         // Actualizar tarea existente
         const updateResponse = await apiPut<any>(`/tasks/${currentTask.id}`, {
           usuario_id: selectedUserId,
-          fecha_maxima: maxDate,
+          fecha_finalizacion: maxDate,
         })
         
         console.log('Respuesta de actualización de tarea:', updateResponse) // Debug
@@ -274,15 +274,15 @@ export default function AdminBookDetailPage() {
           ...currentTask,
           usuario_id: selectedUserId,
           usuario_nombre: selectedUser ? `${selectedUser.nombres} ${selectedUser.apellidos}` : 'Usuario',
-          fecha_maxima: maxDate,
+          fecha_finalizacion: maxDate,
         })
       } else {
         // Crear nueva tarea
         const createResponse = await apiPost<any>('/tasks', {
           libro_id: book.id,
           usuario_id: selectedUserId,
-          estado_id: book.estado.id,
-          fecha_maxima: maxDate,
+          estado_nuevo_id: book.estado.id,
+          fecha_finalizacion: maxDate,
         })
         
         console.log('Respuesta de creación de tarea:', createResponse) // Debug
@@ -305,7 +305,7 @@ export default function AdminBookDetailPage() {
             id: taskData.id,
             usuario_id: selectedUserId,
             usuario_nombre: selectedUser ? `${selectedUser.nombres} ${selectedUser.apellidos}` : 'Usuario',
-            fecha_maxima: maxDate,
+            fecha_finalizacion: maxDate,
           })
         }
       }
@@ -681,9 +681,9 @@ export default function AdminBookDetailPage() {
                     <span className="book-detail-table-value">{currentTask.usuario_nombre}</span>
                   </div>
                   <div className="book-detail-table-row">
-                    <span className="book-detail-table-label">Fecha Máxima:</span>
+                    <span className="book-detail-table-label">Fecha Límite:</span>
                     <span className="book-detail-table-value">
-                      {currentTask.fecha_maxima ? new Date(currentTask.fecha_maxima).toLocaleDateString('es-ES') : 'Sin fecha'}
+                      {currentTask.fecha_finalizacion ? new Date(currentTask.fecha_finalizacion).toLocaleDateString('es-ES') : 'Sin fecha'}
                     </span>
                   </div>
                   <button className="book-detail-btn" onClick={openAssignModal}>
@@ -1051,7 +1051,7 @@ export default function AdminBookDetailPage() {
               </div>
 
               <div className="modal-field">
-                <label className="modal-label">Fecha Máxima</label>
+                <label className="modal-label">Fecha Límite</label>
                 <input
                   type="date"
                   className="modal-input"

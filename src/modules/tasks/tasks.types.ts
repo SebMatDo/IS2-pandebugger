@@ -10,6 +10,7 @@ export interface CreateTaskDto {
 }
 
 export interface UpdateTaskDto {            
+  usuario_id?: number;             
   estado_nuevo_id?: number;        
   fecha_finalizacion?: string;     
   observaciones?: string;          

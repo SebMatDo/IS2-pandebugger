@@ -80,13 +80,40 @@ export class TasksService {
     if (!existingTask) {
       throw new AppError('Tarea no encontrada.', 404);
     }
-    const updateData: Partial<Task> = {
-    ...dto,
-    fecha_finalizacion: dto.fecha_finalizacion
-      ? new Date(dto.fecha_finalizacion)
-      : undefined,
-  };
-    const updatedTask = await taskRepository.update(id, updateData as any);
+    
+    // Validar que se envíe al menos un campo para actualizar
+    const validFields = ['usuario_id', 'estado_nuevo_id', 'fecha_finalizacion', 'observaciones'];
+    const receivedFields = Object.keys(dto);
+    const invalidFields = receivedFields.filter(field => !validFields.includes(field));
+    
+    if (invalidFields.length > 0) {
+      throw new AppError(
+        `Campos inválidos: ${invalidFields.join(', ')}. Campos permitidos: ${validFields.join(', ')}`,
+        400
+      );
+    }
+    
+    if (receivedFields.length === 0) {
+      throw new AppError('Debe proporcionar al menos un campo para actualizar.', 400);
+    }
+    
+    const updateData: Partial<Task> = {};
+    
+    // Mapear campos del DTO al objeto Task
+    if (dto.usuario_id !== undefined) {
+      updateData.usuario_id = dto.usuario_id;
+    }
+    if (dto.estado_nuevo_id !== undefined) {
+      updateData.estado_nuevo_id = dto.estado_nuevo_id;
+    }
+    if (dto.fecha_finalizacion) {
+      updateData.fecha_finalizacion = new Date(dto.fecha_finalizacion);
+    }
+    if (dto.observaciones !== undefined) {
+      updateData.observaciones = dto.observaciones;
+    }
+    
+    const updatedTask = await taskRepository.update(id, updateData);
     if (!updatedTask) {
       throw new AppError('Error al actualizar la tarea.', 500);
     }
