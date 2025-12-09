@@ -10,6 +10,7 @@ import booksRoutes from './modules/books/books.routes';
 import authRoutes from './modules/auth/auth.routes';
 import usersRoutes from './modules/users/users.routes';
 import historyRoutes from './modules/history/history.routes';
+import tasksRoutes from './modules/tasks/tasks.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -34,6 +35,7 @@ export const createApp = (): Application => {
   app.use(`${config.apiPrefix}/auth`, authRoutes);
   app.use(`${config.apiPrefix}/users`, usersRoutes);
   app.use(`${config.apiPrefix}/history`, historyRoutes);
+  app.use(`${config.apiPrefix}/tasks`, tasksRoutes);
 
   // Error handling
   app.use(notFoundHandler);
