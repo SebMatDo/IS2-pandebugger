@@ -40,3 +40,15 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   })
   return handleResponse<T>(res)
 }
+
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(body),
+  })
+  return handleResponse<T>(res)
+}
