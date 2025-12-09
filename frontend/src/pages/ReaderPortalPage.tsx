@@ -10,13 +10,16 @@ type ApiBook = {
   autor: string
   fecha: string
   numero_paginas: number | null
-  estado_id: number
-  estanteria: string | null
-  espacio: string | null
-  categoria_id: number | null
-  directorio_pdf: string | null
-  created_at: string
-  updated_at: string
+  estado: {
+    id: 1 | 2 | 3 | 4 | 5 | 6 | 7
+    nombre: string
+    descripcion?: string | null
+  }
+  categoria?: {
+    nombre: string
+    descripcion?: string | null
+  }
+  directorio_pdf?: string | null
 }
 
 type Book = {
@@ -27,17 +30,25 @@ type Book = {
   coverUrl: string
 }
 
-// type LoginResponse = {
-//   success: boolean
-//   data: {
-//     token: string
-//     user: {
-//       id: number
-//       email: string
-//       rol_nombre: string
-//     }
-//   }
-// }
+type LoginResponse = {
+  status: string
+  data: {
+    user: {
+      id: number
+      nombres: string
+      apellidos: string
+      correo_electronico: string
+      rol: {
+        id: number
+        nombre: string
+      }
+    }
+    token: string
+    expiresIn: string
+  }
+  message: string
+  timestamp: string
+}
 
 export default function ReaderPortalPage() {
   const navigate = useNavigate()
@@ -47,7 +58,7 @@ export default function ReaderPortalPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return !!localStorage.getItem('token')
+    return !!localStorage.getItem('userRoleId') //CAMBIADO
   })
 
   const [userRoleId, setUserRoleId] = useState<number | null>(() => {
@@ -61,10 +72,28 @@ export default function ReaderPortalPage() {
   const [loginLoading, setLoginLoading] = useState(false)
   const [loginError, setLoginError] = useState<string | null>(null)
 
+
+async function AnonymousToken(): Promise<string> {
+    let token = localStorage.getItem('token')
+    if (token) return token
+
+    const res = await apiPost<LoginResponse>('/auth/login-anonymous', {})
+    token = res.data?.token
+
+    if (!token) {
+      throw new Error('No se recibió token del login anónimo')
+    }
+
+    localStorage.setItem('token', token)
+    return token
+  }
+  
   async function loadBooks() {
     try {
       setLoading(true)
       setError(null)
+
+      await AnonymousToken()
 
       const res = await apiGet<{ success: boolean; data: ApiBook[] }>('/books')
 
@@ -72,7 +101,11 @@ export default function ReaderPortalPage() {
         throw new Error('Error al cargar libros')
       }
 
-      const mapped: Book[] = res.data.map((b) => {
+      const published = res.data.filter(
+        (b) => b.estado.id === 7
+      )
+
+      const mapped: Book[] = published.map((b) => {
         let year: number | null = null
         if (b.fecha) {
           const d = new Date(b.fecha)
@@ -93,49 +126,17 @@ export default function ReaderPortalPage() {
       setBooks(mapped)
     } catch (err: any) {
       console.error(err)
-      if (err.status === 401) {
-        // Token inválido o no enviado
-        localStorage.removeItem('token')
-        setIsAuthenticated(false)
-        setError('Debes iniciar sesión para ver los libros.')
-      } else {
-        setError(err.message ?? 'Error al cargar libros')
-      }
+      setError(err.message ?? 'Error al cargar libros')
       setBooks([])
     } finally {
       setLoading(false)
     }
   }
 
-  // Al montar la página: si ya hay token, cargamos libros
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (!token) {
-      setLoading(false)
-      return
-    }
     loadBooks()
   }, [])
 
-  type LoginResponse = {
-  status: string
-  data: {
-    user: {
-      id: number
-      nombres: string
-      apellidos: string
-      correo_electronico: string
-      rol: {
-        id: number
-        nombre: string
-      }
-    }
-    token: string
-    expiresIn: string
-  }
-  message: string
-  timestamp: string
-}
 
 async function handleLogin(e: FormEvent) {
   e.preventDefault()
@@ -177,14 +178,11 @@ async function handleLogin(e: FormEvent) {
   }
 }
 
-
-
   function handleLogout() {
     localStorage.removeItem('token')
     localStorage.removeItem('userRoleId')
     setIsAuthenticated(false)
     setUserRoleId(null)
-    setBooks([])
     setError(null)
   }
 
@@ -194,7 +192,6 @@ async function handleLogin(e: FormEvent) {
     userRoleId !== null &&
     userRoleId >= 1 &&
     userRoleId <= 5
-
 
   return (
     <div className="reader-layout">
@@ -259,14 +256,10 @@ async function handleLogin(e: FormEvent) {
         <section className="reader-books-section">
           <h2 className="reader-section-title">Recently Published</h2>
 
-          {!isAuthenticated && !loading && (
-            <p>Inicia sesión para ver los libros disponibles.</p>
-          )}
-
           {loading && <p>Cargando libros…</p>}
           {error && <p style={{ color: '#b91c1c' }}>{error}</p>}
 
-          {isAuthenticated && !loading && !error && books.length > 0 && (
+          {!loading && !error && books.length > 0 && (
             <div className="reader-books-grid">
               {books.map((book) => (
                 <BookCard key={book.id} book={book} />
@@ -274,9 +267,10 @@ async function handleLogin(e: FormEvent) {
             </div>
           )}
 
-          {isAuthenticated && !loading && !error && books.length === 0 && (
+          {!loading && !error && books.length === 0 && (
             <p>No hay libros publicados todavía.</p>
           )}
+
         </section>
       </main>
 
