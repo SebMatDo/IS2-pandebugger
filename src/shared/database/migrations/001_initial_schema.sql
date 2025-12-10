@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS libros (
     espacio VARCHAR(50),
     categoria_id INTEGER REFERENCES categoria(id) ON DELETE SET NULL,
     directorio_pdf VARCHAR(500),
+    directorio_img VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
