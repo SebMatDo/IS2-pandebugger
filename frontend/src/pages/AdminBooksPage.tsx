@@ -112,7 +112,7 @@ export default function AdminBooksPage() {
 
   const [showCategoryHelp, setShowCategoryHelp] = useState(false)
 
-  const [statusFilter, setStatusFilter] = useState<'all' | StageId>('all')
+  const [statusFilter] = useState<'all' | StageId>('all')
   const [categoryFilter, setCategoryFilter] = useState<'all' | string>('all')
 
 
@@ -247,8 +247,7 @@ export default function AdminBooksPage() {
 
     try {
       setCreateLoading(true)
-
-      // Payload con todos los campos que comentaste
+      
       const payload = {
         isbn: isbn.trim(),
         titulo: title.trim(),
@@ -258,7 +257,7 @@ export default function AdminBooksPage() {
         estanteria: shelf.trim(),
         espacio: space.trim(),
         estado_id: statusId,
-        categoria_id, // puede ser null
+        categoria_id,
         directorio_pdf: pdfPath.trim() || null,
       }
 
@@ -343,15 +342,12 @@ export default function AdminBooksPage() {
             Books
           </button>
           <button className="admin-nav-item">Assignments</button>
-          <button className="admin-nav-item">Categories</button>
           <button
             className="admin-nav-item"
             onClick={() => navigate('/admin/users')}
           >
             Users
           </button>
-          <button className="admin-nav-item">Reports</button>
-          <button className="admin-nav-item">Settings</button>
         </nav>
       </aside>
 
@@ -391,27 +387,6 @@ export default function AdminBooksPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-
-            <select
-              className="admin-books-select"
-              value={statusFilter}
-              onChange={(e) =>
-                setStatusFilter(
-                  e.target.value === 'all'
-                    ? 'all'
-                    : (Number(e.target.value) as StageId)
-                )
-              }
-            >
-              <option value="all">Status</option>
-              <option value={1}>In Reception</option>
-              <option value={2}>In Review</option>
-              <option value={3}>Restoration</option>
-              <option value={4}>Digitization</option>
-              <option value={5}>Quality Control</option>
-              <option value={6}>Classification</option>
-              <option value={7}>Published</option>
-            </select>
 
             <select
               className="admin-books-select"
@@ -673,27 +648,6 @@ export default function AdminBooksPage() {
 
                 {/* 5ª fila: Status / PDF path */}
                 <div className="admin-modal-row">
-                  <div className="admin-modal-field">
-                    <label className="admin-modal-label">Status</label>
-                    <select
-                      className="admin-modal-input"
-                      value={createForm.statusId}
-                      onChange={(e) =>
-                        setCreateForm((prev) => ({
-                          ...prev,
-                          statusId: Number(e.target.value) as StageId,
-                        }))
-                      }
-                    >
-                      <option value={1}>In Reception</option>
-                      <option value={2}>In Review</option>
-                      <option value={3}>Restoration</option>
-                      <option value={4}>Digitization</option>
-                      <option value={5}>Quality Control</option>
-                      <option value={6}>Classification</option>
-                      <option value={7}>Published / Disponible</option>
-                    </select>
-                  </div>
 
                   <div className="admin-modal-field">
                     <label className="admin-modal-label">

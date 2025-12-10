@@ -494,10 +494,12 @@ export default function AdminBookDetailPage() {
               Books
             </button>
             <button className="admin-nav-item">Assignments</button>
-            <button className="admin-nav-item">Categories</button>
-            <button className="admin-nav-item">Users</button>
-            <button className="admin-nav-item">Reports</button>
-            <button className="admin-nav-item">Settings</button>
+            <button
+              className="admin-nav-item"
+              onClick={() => navigate('/admin/users')}
+            >
+              Users
+            </button>
           </nav>
         </aside>
 
@@ -550,15 +552,12 @@ export default function AdminBookDetailPage() {
             Books
           </button>
           <button className="admin-nav-item">Assignments</button>
-          <button className="admin-nav-item">Categories</button>
           <button
             className="admin-nav-item"
             onClick={() => navigate('/admin/users')}
           >
             Users
           </button>
-          <button className="admin-nav-item">Reports</button>
-          <button className="admin-nav-item">Settings</button>
         </nav>
       </aside>
 

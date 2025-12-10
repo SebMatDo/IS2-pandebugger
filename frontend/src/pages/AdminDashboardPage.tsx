@@ -194,13 +194,6 @@ export default function AdminDashboardPage() {
           </div>
         </section>
 
-        {/* Filters */}
-        <section className="admin-filters-row">
-          <button className="admin-filter-pill">All Statuses</button>
-          <button className="admin-filter-pill">All Assignees</button>
-          <button className="admin-filter-reset">Reset Filters</button>
-        </section>
-
         {/* Kanban board */}
         <section className="admin-board">
           {stages.map((stage) => {
