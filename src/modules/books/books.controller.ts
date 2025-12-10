@@ -200,7 +200,9 @@ async updateCategory(req: BookRequest, res: Response, next: NextFunction): Promi
     next(error);
   }
 }
-
+  /**
+   * GET /api/v1/books/:id/cover - Get book cover image
+   */
 async getBookCover(req: BookRequest, res: Response, next: NextFunction): Promise<void> {
     try {
         const id = parseInt(req.params.id);
@@ -217,7 +219,7 @@ async getBookCover(req: BookRequest, res: Response, next: NextFunction): Promise
         // 2. Resolve the absolute file path
         // Ensure this path resolution correctly points to your file storage location
         const rootDir = process.cwd();
-        // Assuming coverPath contains the path relative to the project root (e.g., 'uploads/covers/book-123.jpg')
+        // Assuming coverPath contains the path relative to the project root
         const absolutePath = path.join(rootDir, coverPath); 
 
         // 3. Send the file using Express's built-in file streaming
@@ -226,6 +228,45 @@ async getBookCover(req: BookRequest, res: Response, next: NextFunction): Promise
                 // If the file is missing on disk (ENOENT), return a 404.
                 if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
                     res.status(404).send('Archivo de portada no encontrado en el servidor.');
+                } else {
+                    next(err); // Pass other errors to the error handler
+                }
+            }
+        });
+
+    } catch (error) {
+        // Catches AppError from service (404 book not found, etc.)
+        next(error); 
+    }
+}
+  /**
+   * GET /api/v1/books/:id/pdf - Get book PDF file
+   */
+async getBookPdf(req: BookRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const id = parseInt(req.params.id);
+
+        if (isNaN(id)) {
+            res.status(400).json({ success: false, message: 'ID de libro inválido' });
+            return;
+        }
+
+        // 1. Get the pdf path using the new focused service method
+        // This throws a 404 AppError if the book or path doesn't exist
+        const pdfPath = await booksService.getBookPdfPath(id); 
+        
+        // 2. Resolve the absolute file path
+        // Ensure this path resolution correctly points to your file storage location
+        const rootDir = process.cwd();
+        // Assuming pdfPath contains the path relative to the project root
+        const absolutePath = path.join(rootDir, pdfPath); 
+
+        // 3. Send the file using Express's built-in file streaming
+        res.sendFile(absolutePath, (err) => {
+            if (err) {
+                // If the file is missing on disk (ENOENT), return a 404.
+                if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+                    res.status(404).send('Archivo de PDF no encontrado en el servidor.');
                 } else {
                     next(err); // Pass other errors to the error handler
                 }
