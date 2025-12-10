@@ -127,7 +127,12 @@ export default function AdminDashboardPage() {
           >
             Books
           </button>
-          <button className="admin-nav-item">Assignments</button>
+          <button 
+            className="admin-nav-item"
+             onClick={() => navigate('/admin/assignments')}
+          >
+            Assignments
+          </button>
           <button
             className="admin-nav-item"
             onClick={() => navigate('/admin/users')}

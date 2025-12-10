@@ -4,6 +4,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage'
 import AdminBookDetailPage from './pages/AdminBookDetailPage'
 import AdminBooksPage from './pages/AdminBooksPage'
 import AdminUsersPage from './pages/AdminUsersPage'
+import AdminAssignmentsPage from './pages/AdminAssignmentsPage'
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/admin/books" element={<AdminBooksPage />} />
         <Route path="/admin/books/:id" element={<AdminBookDetailPage />} />
         <Route path="/admin/users" element={<AdminUsersPage />} />
+        <Route path="/admin/assignments" element={<AdminAssignmentsPage />} />
       </Routes>
     </BrowserRouter>
   )
