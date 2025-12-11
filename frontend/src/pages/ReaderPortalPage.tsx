@@ -20,6 +20,8 @@ type ApiBook = {
     descripcion?: string | null
   }
   directorio_pdf?: string | null
+  // 👇 NUEVO: viene de la BD (seed)
+  directorio_img?: string | null
 }
 
 type Book = {
@@ -50,28 +52,24 @@ type LoginResponse = {
   timestamp: string
 }
 
-async function fetchCoverUrl(bookId: number): Promise<string> {
-  try {
-    const token = localStorage.getItem('token') ?? ''
+// URL de respaldo por si un libro no tiene imagen
+const PLACEHOLDER_COVER =
+  'https://via.placeholder.com/240x320?text=Libro'
 
-    const res = await fetch(`/${bookId}/cover`, {
-      headers: token
-        ? {
-            Authorization: `Bearer ${token}`,
-          }
-        : {},
-    })
-
-    if (!res.ok) {
-      throw new Error('No se pudo obtener la portada')
-    }
-
-    const blob = await res.blob()
-    return URL.createObjectURL(blob)
-  } catch (error) {
-    console.error('Error al cargar portada del libro', bookId, error)
-    return 'https://via.placeholder.com/240x320?text=Libro'
+// Construye la URL de la portada a partir del libro
+function getCoverUrlFromBook(book: ApiBook): string {
+  // Si en la BD no hay imagen, usamos placeholder
+  if (!book.directorio_img) {
+    console.log("no se encontro el vaino")
+    return PLACEHOLDER_COVER
   }
+
+  // Si ya viene una URL absoluta (http/https), se usa tal cual
+  if (book.directorio_img.startsWith('http://') || book.directorio_img.startsWith('https://')) {
+    return book.directorio_img
+  }
+
+  return book.directorio_img
 }
 
 export default function ReaderPortalPage() {
@@ -96,8 +94,7 @@ export default function ReaderPortalPage() {
   const [loginLoading, setLoginLoading] = useState(false)
   const [loginError, setLoginError] = useState<string | null>(null)
 
-
-async function AnonymousToken(): Promise<string> {
+  async function AnonymousToken(): Promise<string> {
     let token = localStorage.getItem('token')
     if (token) return token
 
@@ -111,24 +108,25 @@ async function AnonymousToken(): Promise<string> {
     localStorage.setItem('token', token)
     return token
   }
-  
-async function loadBooks() {
-  try {
-    setLoading(true)
-    setError(null)
 
-    await AnonymousToken()
+  async function loadBooks() {
+    try {
+      setLoading(true)
+      setError(null)
 
-    const res = await apiGet<{ success: boolean; data: ApiBook[] }>('/books')
+      // Nos aseguramos de tener token anónimo
+      await AnonymousToken()
 
-    if (!res.success) {
-      throw new Error('Error al cargar libros')
-    }
+      const res = await apiGet<{ success: boolean; data: ApiBook[] }>('/books')
 
-    const published = res.data.filter((b) => b.estado.id === 7)
+      if (!res.success) {
+        throw new Error('Error al cargar libros')
+      }
 
-    const mapped: Book[] = await Promise.all(
-      published.map(async (b) => {
+      // Solo libros en estado "Publicado" (id 7)
+      const published = res.data.filter((b) => b.estado.id === 7)
+
+      const mapped: Book[] = published.map((b) => {
         let year: number | null = null
         if (b.fecha) {
           const d = new Date(b.fecha)
@@ -137,7 +135,7 @@ async function loadBooks() {
           }
         }
 
-        const coverUrl = await fetchCoverUrl(b.id)
+        const coverUrl = getCoverUrlFromBook(b)
 
         return {
           id: b.id,
@@ -147,63 +145,60 @@ async function loadBooks() {
           coverUrl,
         }
       })
-    )
 
-    setBooks(mapped)
-  } catch (err: any) {
-    console.error(err)
-    setError(err.message ?? 'Error al cargar libros')
-    setBooks([])
-  } finally {
-    setLoading(false)
+      setBooks(mapped)
+    } catch (err: any) {
+      console.error(err)
+      setError(err.message ?? 'Error al cargar libros')
+      setBooks([])
+    } finally {
+      setLoading(false)
+    }
   }
-}
-
 
   useEffect(() => {
     loadBooks()
   }, [])
 
+  async function handleLogin(e: FormEvent) {
+    e.preventDefault()
+    setLoginLoading(true)
+    setLoginError(null)
 
-async function handleLogin(e: FormEvent) {
-  e.preventDefault()
-  setLoginLoading(true)
-  setLoginError(null)
+    try {
+      const res = await apiPost<LoginResponse>('/auth/login', { email, password })
 
-  try {
-    const res = await apiPost<LoginResponse>('/auth/login', { email, password })
+      console.log('LOGIN RESPONSE ->', res)
 
-    console.log('LOGIN RESPONSE ->', res)
+      const token = res.data?.token
+      const roleId = res.data?.user?.rol?.id ?? null
 
-    const token = res.data?.token
-    const roleId = res.data?.user?.rol?.id ?? null
+      if (!token) {
+        throw new Error('Credenciales inválidas')
+      }
 
-    if (!token) {
-      throw new Error('Credenciales inválidas')
+      // guardar token
+      localStorage.setItem('token', token)
+      setIsAuthenticated(true)
+
+      // guardar roleId (1..6)
+      if (roleId !== null) {
+        localStorage.setItem('userRoleId', String(roleId))
+        setUserRoleId(roleId)
+      } else {
+        localStorage.removeItem('userRoleId')
+        setUserRoleId(null)
+      }
+
+      setShowLogin(false)
+      await loadBooks()
+    } catch (err: any) {
+      console.error(err)
+      setLoginError(err.message ?? 'Error al iniciar sesión')
+    } finally {
+      setLoginLoading(false)
     }
-
-    // guardar token
-    localStorage.setItem('token', token)
-    setIsAuthenticated(true)
-
-    // guardar roleId (1..6)
-    if (roleId !== null) {
-      localStorage.setItem('userRoleId', String(roleId))
-      setUserRoleId(roleId)
-    } else {
-      localStorage.removeItem('userRoleId')
-      setUserRoleId(null)
-    }
-
-    setShowLogin(false)
-    await loadBooks()
-  } catch (err: any) {
-    console.error(err)
-    setLoginError(err.message ?? 'Error al iniciar sesión')
-  } finally {
-    setLoginLoading(false)
   }
-}
 
   function handleLogout() {
     localStorage.removeItem('token')
@@ -212,7 +207,6 @@ async function handleLogin(e: FormEvent) {
     setUserRoleId(null)
     setError(null)
   }
-
 
   const canSeeAdminButton =
     isAuthenticated &&
@@ -228,14 +222,13 @@ async function handleLogin(e: FormEvent) {
           <span className="reader-logo">Digital Library Pandebugger</span>
 
           {canSeeAdminButton && (
-          <button
-            className="reader-admin-link"
-            onClick={() => navigate('/admin')}
-          >
-            Admin Dashboard
-          </button>
+            <button
+              className="reader-admin-link"
+              onClick={() => navigate('/admin')}
+            >
+              Admin Dashboard
+            </button>
           )}
-
         </div>
         <div className="reader-navbar-right">
           <button className="reader-nav-link reader-nav-link-active">Home</button>
@@ -297,13 +290,15 @@ async function handleLogin(e: FormEvent) {
           {!loading && !error && books.length === 0 && (
             <p>No hay libros publicados todavía.</p>
           )}
-
         </section>
       </main>
 
       {/* Modal de login */}
       {showLogin && (
-        <div className="login-modal-backdrop" onClick={() => !loginLoading && setShowLogin(false)}>
+        <div
+          className="login-modal-backdrop"
+          onClick={() => !loginLoading && setShowLogin(false)}
+        >
           <div
             className="login-modal"
             onClick={(e) => {
@@ -349,7 +344,11 @@ async function handleLogin(e: FormEvent) {
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="login-submit" disabled={loginLoading}>
+                <button
+                  type="submit"
+                  className="login-submit"
+                  disabled={loginLoading}
+                >
                   {loginLoading ? 'Ingresando…' : 'Entrar'}
                 </button>
               </div>
