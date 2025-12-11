@@ -110,4 +110,14 @@ router.get(
     asyncHandler(booksController.getBookCover.bind(booksController))
 );
 
+/**
+ * GET /api/v1/books/:id/pdf
+ * Serves the book PDF file.
+ */
+router.get(
+    '/:id/pdf', // Path: /api/v1/books/:id/pdf
+    authenticate,
+    asyncHandler(booksController.getBookPdf.bind(booksController))
+);
+
 export default router;

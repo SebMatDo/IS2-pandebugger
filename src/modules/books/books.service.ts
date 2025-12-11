@@ -527,6 +527,9 @@ async updateCategory(
 
   return result.rows[0];
 }
+/**
+ get book cover path by book ID
+ */
 async getBookCoverPath(id: number): Promise<string> {
     const result = await db.query<{ directorio_img: string }>(
         'SELECT directorio_img FROM libros WHERE id = $1',
@@ -545,6 +548,28 @@ async getBookCoverPath(id: number): Promise<string> {
     }
     
     return coverPath;
+}
+/**
+ get book pdf path by book ID
+ */
+async getBookPdfPath(id: number): Promise<string> {
+    const result = await db.query<{ directorio_pdf: string }>(
+        'SELECT directorio_pdf FROM libros WHERE id = $1',
+        [id]
+    );
+
+    if (result.rows.length === 0) {
+        throw new AppError('Libro no encontrado.', 404);
+    }
+    
+    const pdfPath = result.rows[0].directorio_pdf;
+    
+    if (!pdfPath) {
+        // If the book exists but the path is NULL/empty in the DB
+        throw new AppError('PDF no disponible para este libro.', 404);
+    }
+    
+    return pdfPath;
 }
 }
 
