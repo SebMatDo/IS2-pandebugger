@@ -89,8 +89,8 @@ export default function ReaderPortalPage() {
   })
 
   const [showLogin, setShowLogin] = useState(false)
-  const [email, setEmail] = useState('admin@pandebugger.com') // por ahora para probar
-  const [password, setPassword] = useState('Test123!')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loginLoading, setLoginLoading] = useState(false)
   const [loginError, setLoginError] = useState<string | null>(null)
 
@@ -309,7 +309,6 @@ export default function ReaderPortalPage() {
             <p className="login-subtitle">
               Utiliza las credenciales autorizadas
               <br />
-              <code>admin@pandebugger.com / Test123!</code>
             </p>
 
             <form className="login-form" onSubmit={handleLogin}>
