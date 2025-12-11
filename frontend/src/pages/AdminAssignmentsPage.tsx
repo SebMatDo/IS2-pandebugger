@@ -27,11 +27,19 @@ type BookFromApi = {
   autor: string;
   isbn: string | null;
   fecha: string | null;
+  numero_paginas?: number | null;
+  estanteria?: string | null;
+  espacio?: string | null;
   estado?: {
     id: StageId;
     nombre: string;
     descripcion?: string | null;
   };
+  categoria?: {
+    nombre: string;
+    descripcion?: string | null;
+  };
+  directorio_pdf?: string | null;
 };
 
 // Igual a AdminUsersPage
@@ -128,7 +136,6 @@ function pickCurrentTask(tasks: TaskFromApi[]): TaskFromApi | null {
   if (!tasks.length) return null;
 
   // Regla simple: la de id más alto
-  // (ajústalo si tienes created_at real)
   return [...tasks].sort((a, b) => b.id - a.id)[0];
 }
 
@@ -143,6 +150,7 @@ export default function AdminAssignmentsPage() {
   const [users, setUsers] = useState<UserUI[]>([]);
   const [tasks, setTasks] = useState<TaskFromApi[]>([]);
 
+  // (tu vista actual no usa setter; lo dejo igual)
   const [search] = useState("");
   const [userFilter, setUserFilter] = useState<number | "all">("all");
 
@@ -182,6 +190,12 @@ export default function AdminAssignmentsPage() {
 
     load();
   }, []);
+
+  const bookById = useMemo(() => {
+    const map = new Map<number, BookFromApi>();
+    for (const b of books) map.set(b.id, b);
+    return map;
+  }, [books]);
 
   // Mapear libros a UI
   const mappedBooks: AssignedBookUI[] = useMemo(() => {
@@ -246,7 +260,9 @@ export default function AdminAssignmentsPage() {
     const q = search.trim().toLowerCase();
 
     return assignmentsByUser
-      .filter((row) => (userFilter === "all" ? true : row.user.id === userFilter))
+      .filter((row) =>
+        userFilter === "all" ? true : row.user.id === userFilter
+      )
       .filter((row) => {
         if (!q) return true;
 
@@ -265,7 +281,6 @@ export default function AdminAssignmentsPage() {
       }));
   }, [assignmentsByUser, search, userFilter]);
 
-  // Vista por etapas usando tasks para top assignees
   const assignmentsByStage = useMemo(() => {
     return stages.map((s) => {
       const booksInStage = mappedBooks.filter((b) => b.stageId === s.id);
@@ -276,9 +291,7 @@ export default function AdminAssignmentsPage() {
         const task = taskByBookId.get(b.id);
         if (!task) continue;
 
-        const user =
-          users.find((u) => u.id === task.usuario_id) ||
-          null;
+        const user = users.find((u) => u.id === task.usuario_id) || null;
 
         const name =
           user?.name ||
@@ -391,13 +404,11 @@ export default function AdminAssignmentsPage() {
         {mode === "user" ? (
           <section className="assignments-users-list">
             {filteredAssignmentsByUser.length === 0 && !loading && (
-              <div className="assignments-empty">
-                No assignments to display.
-              </div>
+              <div className="assignments-empty">No assignments to display.</div>
             )}
 
-            {filteredAssignmentsByUser.map(({ user, books }) => {
-              const workload = books.length;
+            {filteredAssignmentsByUser.map(({ user, books: assignedBooks }) => {
+              const workload = assignedBooks.length;
               const capacity = user.capacity ?? 5;
               const ratio = Math.min(workload, capacity);
 
@@ -438,26 +449,32 @@ export default function AdminAssignmentsPage() {
                   </div>
 
                   <div className="assignments-user-books">
-                    {books.length === 0 ? (
+                    {assignedBooks.length === 0 ? (
                       <div className="assignments-user-books-empty">
                         No assigned books
                       </div>
                     ) : (
-                      books.map((b) => (
-                        <button
-                          key={b.id}
-                          className="assignments-book-tile"
-                          onClick={() =>
-                            navigate(`/admin/books/${b.id}`, {
-                              state: { bookId: b.id },
-                            })
-                          }
-                          type="button"
-                        >
-                          <div className="assignments-book-title">{b.title}</div>
-                          <div className="assignments-book-code">{b.code}</div>
-                        </button>
-                      ))
+                      assignedBooks.map((b) => {
+                        const fullBook = bookById.get(b.id);
+
+                        return (
+                          <button
+                            key={b.id}
+                            className="assignments-book-tile"
+                            type="button"
+                            onClick={() =>
+                              navigate(`/admin/books/${b.id}`, {
+                                state: fullBook ? { book: fullBook } : undefined,
+                              })
+                            }
+                          >
+                            <div className="assignments-book-title">
+                              {b.title}
+                            </div>
+                            <div className="assignments-book-code">{b.code}</div>
+                          </button>
+                        );
+                      })
                     )}
                   </div>
                 </article>
