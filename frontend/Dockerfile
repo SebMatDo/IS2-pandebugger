@@ -7,8 +7,8 @@ WORKDIR /app
 # Copiamos solo lo necesario para instalar deps
 COPY package*.json ./
 
-# Instala dependencias (usa npm ci si tienes package-lock.json)
-RUN npm ci
+# Instala dependencias
+RUN npm install
 
 # Ahora copiamos el resto del código
 COPY . .
